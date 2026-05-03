@@ -1,0 +1,33 @@
+name: Deploy docs
+
+# Disabled: GH Actions builds of mkdocs were producing broken fenced-code
+# rendering despite identical pip versions and Python to the local venv.
+# Until the root cause is found, deploys are done manually:
+#
+#   . .venv/bin/activate
+#   mkdocs gh-deploy --force --no-history
+#
+# That builds locally and pushes to the gh-pages branch, which is the Pages
+# source. Re-enable this workflow by removing `if: false` once CI builds
+# render fenced code blocks correctly.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.3"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: mkdocs build --strict

@@ -1,0 +1,115 @@
+site_name: Quasarlab Docs
+site_description: Architecture, runbooks, incidents, and command references for my homelab.
+site_url: https://docs.herro.me
+repo_url: https://github.com/mithr4ndir/quasarlab-docs
+repo_name: mithr4ndir/quasarlab-docs
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.keys
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Network: architecture/network.md
+      - Monitoring: architecture/monitoring.md
+      - Visuals: architecture/visuals.md
+  - Incidents:
+      - incidents/index.md
+      - 2026-05-03 Grafana / MetalLB / pg_hba: incidents/2026-05-03-grafana-metallb-pg_hba.md
+      - 2026-05-02 1Password rate-limit recurrence: incidents/2026-05-02-op-ratelimit-recurrence.md
+      - 2026-04-19 Bitnami images removed: incidents/2026-04-19-bitnami-images-removed.md
+      - 2026-04-18 1Password daily rate-limit: incidents/2026-04-18-1password-rate-limit.md
+      - 2026-04-18 etcd bloat RCA: incidents/2026-04-18-etcd-bloat-rca.md
+      - 2026-04-13 Alerting blackout cascade: incidents/2026-04-13-alerting-blackout-cascade.md
+      - 2026-04-07 Grafana pgloader migration: incidents/2026-04-07-grafana-pgloader-migration.md
+  - Runbooks:
+      - runbooks/index.md
+      - Postgres rejecting K8s pods: runbooks/pg-hba-rejecting-k8s-pods.md
+      - MetalLB IP not answering ARP: runbooks/metallb-no-arp-response.md
+      - Grafana CrashLoopBackOff: runbooks/grafana-crashloop.md
+      - etcd defrag: runbooks/etcd-defrag.md
+      - Bitnami image 404: runbooks/bitnami-image-404.md
+      - Jellyfin DB corruption: runbooks/jellyfin-db-corruption.md
+      - Jellyfin transcoding / ffmpeg: runbooks/jellyfin-transcoding-ffmpeg.md
+      - 1Password rate-limit hit: runbooks/1password-rate-limit.md
+  - Decisions:
+      - decisions/index.md
+      - 0001 MetalLB L2 not BGP: decisions/0001-metallb-l2.md
+      - 0002 External Postgres VM: decisions/0002-external-postgres.md
+      - 0003 ArgoCD not Flux: decisions/0003-argocd-not-flux.md
+      - 0004 Bake monitoring images: decisions/0004-bake-monitoring-images.md
+      - 0005 Healthchecks.io deadman: decisions/0005-healthchecks-deadman.md
+      - 0006 Database-per-app: decisions/0006-database-per-app.md
+  - Cheatsheet:
+      - cheatsheet/index.md
+      - kubectl: cheatsheet/kubectl.md
+      - Helm and ArgoCD: cheatsheet/helm-argocd.md
+      - Bash and Linux: cheatsheet/bash-and-linux.md
+      - Postgres: cheatsheet/postgres.md
+      - Prometheus and amtool: cheatsheet/prometheus-amtool.md
+      - 1Password and ExternalSecrets: cheatsheet/onepassword-eso.md
+      - Ansible: cheatsheet/ansible.md
+      - Terraform: cheatsheet/terraform.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/mithr4ndir
