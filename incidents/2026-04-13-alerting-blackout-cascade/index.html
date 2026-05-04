@@ -1,0 +1,1954 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Architecture, runbooks, incidents, and command references for my homelab.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.herro.me/incidents/2026-04-13-alerting-blackout-cascade/">
+      
+      
+        <link rel="prev" href="../2026-04-18-etcd-bloat-rca/">
+      
+      
+        <link rel="next" href="../2026-04-07-grafana-pgloader-migration/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.45">
+    
+    
+      
+        <title>2026-04-13 Alerting blackout cascade - Quasarlab Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0253249f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#2026-04-13-pve-self-fence-9-hour-alerting-blackout-full-remediation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Quasarlab Docs" class="md-header__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Quasarlab Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-04-13 Alerting blackout cascade
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+    
+  
+  Incidents
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../runbooks/" class="md-tabs__link">
+          
+  
+    
+  
+  Runbooks
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../decisions/" class="md-tabs__link">
+          
+  
+    
+  
+  Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cheatsheet/" class="md-tabs__link">
+          
+  
+    
+  
+  Cheatsheet
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Quasarlab Docs" class="md-nav__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Quasarlab Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/network/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/visuals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visuals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Incidents
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Incidents
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-03-grafana-metallb-pg_hba/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-03 Grafana / MetalLB / pg_hba
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-op-ratelimit-recurrence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-02 1Password rate-limit recurrence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-19-bitnami-images-removed/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-19 Bitnami images removed
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-18-1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 1Password daily rate-limit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-18-etcd-bloat-rca/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 etcd bloat RCA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    2026-04-13 Alerting blackout cascade
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-13 Alerting blackout cascade
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#symptom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Symptom
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-independent-failures-that-compounded" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three independent failures that compounded
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three independent failures that compounded">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#failure-1-watchdog-routed-to-null" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failure 1: Watchdog routed to null
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-2-single-replica-discord-alert-proxy-on-a-downed-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failure 2: Single-replica discord-alert-proxy on a downed node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-3-the-proxy-installed-dependencies-at-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failure 3: The proxy installed dependencies at runtime
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#root-cause-of-the-original-pve-outage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Root cause of the original PVE outage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remediation-across-the-cluster-8-prs-2026-04-13-to-2026-04-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remediation across the cluster (8 PRs, 2026-04-13 to 2026-04-18)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Remediation across the cluster (8 PRs, 2026-04-13 to 2026-04-18)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alerting-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alerting chain
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxmox-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      Proxmox-side
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-incident-is-really-about" class="md-nav__link">
+    <span class="md-ellipsis">
+      What this incident is really about
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-ups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Follow-ups
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-incident-is-a-good-example-of" class="md-nav__link">
+    <span class="md-ellipsis">
+      What this incident is a good example of
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-07-grafana-pgloader-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-07 Grafana pgloader migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../runbooks/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Runbooks
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Runbooks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/pg-hba-rejecting-k8s-pods/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres rejecting K8s pods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/metallb-no-arp-response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MetalLB IP not answering ARP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/grafana-crashloop/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Grafana CrashLoopBackOff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/etcd-defrag/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    etcd defrag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/bitnami-image-404/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bitnami image 404
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-db-corruption/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin DB corruption
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-transcoding-ffmpeg/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcoding / ffmpeg
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password rate-limit hit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../decisions/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Decisions
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Decisions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0001-metallb-l2/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0001 MetalLB L2 not BGP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0002-external-postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0002 External Postgres VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0003-argocd-not-flux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0003 ArgoCD not Flux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0004-bake-monitoring-images/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0004 Bake monitoring images
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0005-healthchecks-deadman/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0005 Healthchecks.io deadman
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0006-database-per-app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0006 Database-per-app
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cheatsheet/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Cheatsheet
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Cheatsheet
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/kubectl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    kubectl
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/helm-argocd/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helm and ArgoCD
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/bash-and-linux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bash and Linux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/prometheus-amtool/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus and amtool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/onepassword-eso/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password and ExternalSecrets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/ansible/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/terraform/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Terraform
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#symptom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Symptom
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-independent-failures-that-compounded" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three independent failures that compounded
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three independent failures that compounded">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#failure-1-watchdog-routed-to-null" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failure 1: Watchdog routed to null
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-2-single-replica-discord-alert-proxy-on-a-downed-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failure 2: Single-replica discord-alert-proxy on a downed node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-3-the-proxy-installed-dependencies-at-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failure 3: The proxy installed dependencies at runtime
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#root-cause-of-the-original-pve-outage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Root cause of the original PVE outage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remediation-across-the-cluster-8-prs-2026-04-13-to-2026-04-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remediation across the cluster (8 PRs, 2026-04-13 to 2026-04-18)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Remediation across the cluster (8 PRs, 2026-04-13 to 2026-04-18)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alerting-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alerting chain
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxmox-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      Proxmox-side
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-incident-is-really-about" class="md-nav__link">
+    <span class="md-ellipsis">
+      What this incident is really about
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-ups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Follow-ups
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-incident-is-a-good-example-of" class="md-nav__link">
+    <span class="md-ellipsis">
+      What this incident is a good example of
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/mithr4ndir/quasarlab-docs/edit/main/docs/incidents/2026-04-13-alerting-blackout-cascade.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="2026-04-13-pve-self-fence-9-hour-alerting-blackout-full-remediation">2026-04-13: PVE self-fence, 9-hour alerting blackout, full remediation<a class="headerlink" href="#2026-04-13-pve-self-fence-9-hour-alerting-blackout-full-remediation" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-04-13, 08:55 PDT
+<strong>Time-to-detect:</strong> ~9 hours (no alerts; noticed by user during normal use)
+<strong>Time-to-mitigate:</strong> Same day after detection
+<strong>Time-to-remediate (the alerting chain):</strong> 2026-04-18 (5 days of follow-up work, 8 PRs)
+<strong>Severity:</strong> S1. Lab service degraded for hours, alert pipeline silently down for the entire window.</p>
+<p>This one is the foundation incident for a lot of the structural work the lab has now. It exposed three different single points of failure in the pipeline that is <em>supposed</em> to tell me when things are broken, and remediating those took the rest of the week.</p>
+<h2 id="symptom">Symptom<a class="headerlink" href="#symptom" title="Permanent link">&para;</a></h2>
+<p>Around 17:30 PDT, while working on something else, I noticed the trading dashboard was unreachable. A <code>kubectl get pod -A</code> showed multiple pods in <code>Pending</code>, all on nodes whose kubelets were not reporting. <code>pvecm status</code> from the surviving Proxmox node showed only one peer.</p>
+<p><code>pve</code> (one of the two Proxmox hosts) had self-fenced at 08:55:04. Seven of eight <code>onboot=1</code> VMs failed to start back up after the reboot. Several K8s nodes were among them. The cluster ran on whatever was left for nine hours, no alert ever reached me.</p>
+<h2 id="three-independent-failures-that-compounded">Three independent failures that compounded<a class="headerlink" href="#three-independent-failures-that-compounded" title="Permanent link">&para;</a></h2>
+<h3 id="failure-1-watchdog-routed-to-null">Failure 1: Watchdog routed to <code>null</code><a class="headerlink" href="#failure-1-watchdog-routed-to-null" title="Permanent link">&para;</a></h3>
+<p>The Alertmanager <code>Watchdog</code> alert is the deadman: it fires constantly and is meant to be received by an external service that pages <strong>when it stops arriving</strong>. The config had <code>receiver: null</code> for it. So the alert fired, was discarded, and there was no external observer to notice the silence. The whole point of a deadman switch was missing.</p>
+<h3 id="failure-2-single-replica-discord-alert-proxy-on-a-downed-node">Failure 2: Single-replica <code>discord-alert-proxy</code> on a downed node<a class="headerlink" href="#failure-2-single-replica-discord-alert-proxy-on-a-downed-node" title="Permanent link">&para;</a></h3>
+<p>The Discord notification proxy was a 1-replica Deployment. The replica happened to be running on <code>k8cluster1</code>, which was on the downed PVE host. With no replica running, every Alertmanager send failed. There was no podAntiAffinity, no PDB, and no priorityClassName, so when the node came back the controller had no urgency to schedule it.</p>
+<h3 id="failure-3-the-proxy-installed-dependencies-at-runtime">Failure 3: The proxy installed dependencies at runtime<a class="headerlink" href="#failure-3-the-proxy-installed-dependencies-at-runtime" title="Permanent link">&para;</a></h3>
+<p>The proxy deployment ran a base <code>python:3.12-slim</code> image and <code>pip install</code>-ed <code>fastapi</code>, <code>uvicorn</code>, <code>httpx</code> from an inline ConfigMap entrypoint. So even when the pod <em>did</em> eventually start, it depended on PyPI being reachable from inside the cluster at startup. Effectively: a monitoring component whose recovery depended on outbound internet from the lab. PyPI being available was something I never checked because nothing in the alert path advertised it as a dependency.</p>
+<h2 id="root-cause-of-the-original-pve-outage">Root cause of the original PVE outage<a class="headerlink" href="#root-cause-of-the-original-pve-outage" title="Permanent link">&para;</a></h2>
+<p><code>pve-guests.service</code> (the Proxmox systemd unit that starts onboot VMs) fires ~13 seconds after the kernel hands off. The <code>freenas-proxmox</code> plugin I use to resolve iSCSI extent paths calls the TrueNAS REST API at <code>https://10.10.12.2/api/v2.0/system/info</code>. If TrueNAS's API daemon is not yet serving when this call happens, the plugin fails fast with no retry, the systemd unit declares failure for the affected VMs, and they sit in a stopped state.</p>
+<p>After a cold reboot of pve, TrueNAS was still booting and not yet serving the API. The plugin failed for every VM that depended on iSCSI extents (the K8s nodes among them). pve-guests gave up. pve was up but the VMs that mattered were not.</p>
+<h2 id="remediation-across-the-cluster-8-prs-2026-04-13-to-2026-04-18">Remediation across the cluster (8 PRs, 2026-04-13 to 2026-04-18)<a class="headerlink" href="#remediation-across-the-cluster-8-prs-2026-04-13-to-2026-04-18" title="Permanent link">&para;</a></h2>
+<h3 id="alerting-chain">Alerting chain<a class="headerlink" href="#alerting-chain" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Watchdog → Healthchecks.io</strong> (PR #115). The <code>Watchdog</code> alert is now routed to a Healthchecks.io check via an ExternalSecret-supplied URL. Healthchecks.io emails (and SMS, in this config) when it stops getting pings. External observer of internal silence, finally.</li>
+<li><strong><code>discord-alert-proxy</code> made highly available</strong> (PRs #117, #118). Two replicas, soft podAntiAffinity, PodDisruptionBudget with <code>minAvailable: 1</code>, <code>priorityClassName: system-cluster-critical</code>. The pod that pages me cannot be the pod most likely to be evicted.</li>
+<li><strong>Image baked, dependencies pinned</strong> (PRs #119, #120, #121, #122). Source moved into the repo at <code>infrastructure/monitoring/discord-alert-proxy/</code>. Multi-stage Dockerfile, non-root UID 10001, requirements pinned. Built in CI, pushed to <code>ghcr.io/mithr4ndir/discord-alert-proxy</code>, deployment refers to the image by 12-character SHA tag, not <code>latest</code>. Dependabot covers pip + docker + github-actions ecosystems. Weekly scheduled rebuild keeps the base image fresh; Trivy gates the build on HIGH/CRITICAL CVEs.</li>
+<li><strong>PveGuestDown alert</strong> improved (PR #117). Tag-based silencing via an anchored <code>(.*;)?(no-alert|maintenance)(;.*)?</code> regex on the VM tag string, plus a <code>PveGuestMaintenanceTagStale</code> safety alert at 24 hours so a tag I forgot to remove eventually pages.</li>
+</ul>
+<h3 id="proxmox-side">Proxmox-side<a class="headerlink" href="#proxmox-side" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>wait-truenas-api.sh</code> ExecStartPre</strong> wired into pve-guests.service via drop-in (<code>roles/pve/freenas_iscsi</code>). Polls the TrueNAS REST endpoint every 2 seconds for up to 300 seconds. Accepts 2xx, 401, and 403 (the API daemon being up but auth-rejecting is "ready"). Rejects 5xx (daemon up but malfunctioning). <code>TimeoutStartSec=infinity</code> preserves the upstream pve-guests timeout. Ansible deploys the script and the drop-in.</li>
+<li><strong>QDevice NSS database</strong> rebuilt by hand: corosync-qdevice on pve had had a corrupted <code>nssdb</code> since the 04-13 reboot, so the cluster had been running at 2/3 votes for a week and I hadn't noticed. Copied the working nssdb from pve2.</li>
+<li><strong>Both PVE nodes upgraded</strong> 8.4.x to 8.4.18.</li>
+<li><strong>SSH host-key policy</strong> in <code>ansible.cfg</code> set to <code>accept-new</code> so brand-new hosts can be reached without manual <code>ssh-keyscan</code>, but a host-key change on a known host still refuses (TOFU, not blanket trust).</li>
+<li><strong><code>update-metrics.timer</code> runs every 10 minutes</strong> so <code>node_reboot_required</code> gauge stays fresh; was stale after reboots before this change.</li>
+</ul>
+<h3 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h3>
+<p>Real reboots of both pve and pve2 on 2026-04-14. The TrueNAS-readiness wait logged "reachable (HTTP 401) after 9 attempts" in both cases. Every onboot VM started cleanly. ~10 min recovery on pve, ~18 min on pve2. The whole pipeline was tested, including the Healthchecks.io deadman: I let the cluster idle for 11 minutes (longer than the HC.io alert threshold) to confirm it would page if Watchdog stopped, then re-armed.</p>
+<h2 id="what-this-incident-is-really-about">What this incident is really about<a class="headerlink" href="#what-this-incident-is-really-about" title="Permanent link">&para;</a></h2>
+<p>It is easy to treat this as "PVE had a bad reboot." The real lesson is structural: <strong>don't host the alerter on the thing it monitors.</strong> Each of the three failures was a different instance of the same bug.</p>
+<ul>
+<li>The Watchdog routed to <code>null</code> meant the alerter was hosted on its own honesty: I trusted the config to be right, with no external observer.</li>
+<li>The single-replica proxy meant the alerter was hosted on the cluster it monitors. Cluster down, alerter down.</li>
+<li>The runtime <code>pip install</code> meant the alerter was hosted on PyPI's availability at the worst possible time.</li>
+</ul>
+<p>After the remediation, every leg of the alert path has an external observer or external pin:</p>
+<ul>
+<li>Watchdog has an external observer (Healthchecks.io).</li>
+<li><code>discord-alert-proxy</code> has external pinning (image baked at GHCR, deployed by SHA).</li>
+<li><code>discord-alert-proxy</code> has internal redundancy (HA, PDB, priority).</li>
+</ul>
+<p>There is still one node left to chase: the alert pipeline still runs <em>inside</em> the K8s cluster, so a full cluster-down event will still go silent. That is the active question behind <a href="../../decisions/">"public read-only Grafana"</a> and the off-site Uptime Kuma decision.</p>
+<h2 id="follow-ups">Follow-ups<a class="headerlink" href="#follow-ups" title="Permanent link">&para;</a></h2>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Alert chain hardened (8 PRs above).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Boot-race fixed (<code>wait-truenas-api.sh</code>).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> QDevice NSS rebuilt; PVE upgrades applied.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Reboot-required gauge timer refresh.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Off-site external probe (Uptime Kuma off-site) so a full cluster-down still pages. Tracked under <a href="../../decisions/">decisions/index.md</a>.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> CI step that walks every <code>image:</code> reference and HEAD-requests the registry, so a future "supply chain rot" failure does not need to be discovered by accident again. Same idea, different scope.</li>
+</ul>
+<h2 id="what-this-incident-is-a-good-example-of">What this incident is a good example of<a class="headerlink" href="#what-this-incident-is-a-good-example-of" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A symptom-vs-cause split. "Trading dashboard is down" looked like an app failure; the real failure was the alerting chain that should have told me 9 hours earlier.</li>
+<li>Three independent SPOFs in the same path. Fixing only the loudest one would have left the other two waiting to re-fire.</li>
+<li>Choosing <strong>structural</strong> fixes (HA, deadman, baked image) over <strong>tweak</strong> fixes (bump retry count, increase replica memory). The fix list looks heavier upfront but doesn't require the same diagnosis a year later.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/mithr4ndir" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
