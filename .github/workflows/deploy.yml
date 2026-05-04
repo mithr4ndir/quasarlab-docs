@@ -1,33 +1,46 @@
 name: Deploy docs
 
-# Disabled: GH Actions builds of mkdocs were producing broken fenced-code
-# rendering despite identical pip versions and Python to the local venv.
-# Until the root cause is found, deploys are done manually:
-#
-#   . .venv/bin/activate
-#   mkdocs gh-deploy --force --no-history
-#
-# That builds locally and pushes to the gh-pages branch, which is the Pages
-# source. Re-enable this workflow by removing `if: false` once CI builds
-# render fenced code blocks correctly.
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+# One in-flight deploy at a time. Newer commits queue behind the running one
+# so two pushes in quick succession do not race on gh-pages.
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: false
+
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  build:
-    if: false
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # gh-deploy needs full history so it can push gh-pages without
+          # rejecting on a non-fast-forward.
+          fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12.3"
           cache: pip
+
       - run: pip install -r requirements.txt
+
+      # Validate first under strict mode. Catches broken links, missing
+      # anchors, and unrecognised fenced types before we ship them.
       - run: mkdocs build --strict
+
+      - name: Configure git identity for gh-pages push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # Builds again internally and force-pushes the result to gh-pages.
+      # --no-history keeps that branch as a single commit (Pages serves the
+      # tip; nothing else cares about its history).
+      - run: mkdocs gh-deploy --force --no-history
