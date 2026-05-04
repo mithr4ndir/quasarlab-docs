@@ -1,3 +1,8 @@
 mkdocs==1.6.1
 mkdocs-material==9.5.45
 pymdown-extensions==10.11.2
+# Pygments 2.20.0 breaks pymdownx.superfences for plain ```text and other
+# fence languages: the fence is parsed as inline code instead of a block,
+# so ASCII tree art and similar render as a single <p><code> blob.
+# Pin to 2.19.2 to match local until upstream resolves it.
+Pygments==2.19.2
