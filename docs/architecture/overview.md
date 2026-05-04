@@ -70,7 +70,7 @@ A higher-fidelity diagram and screenshots live in [Visuals](visuals.md).
 | `dashboard` | Homepage | Lab landing page |
 | `security` | Falco runtime detection | Discord webhook for alerts |
 
-The full layout is in [k8s-argocd](https://github.com/mithr4ndir/k8s-argocd) (or wherever it lives publicly).
+The full layout is in [k8s-argocd](https://github.com/mithr4ndir/k8s-argocd).
 
 ## Why this shape
 
