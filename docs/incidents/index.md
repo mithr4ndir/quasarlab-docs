@@ -13,6 +13,7 @@ Format for every incident:
 
 ## Index, newest first
 
+- [2026-05-27 Jellyfin GPU D3cold passthrough hang + K620 fallback crash-loop](2026-05-27-jellyfin-gpu-d3cold-passthrough.md)
 - [2026-05-03 Grafana down + MetalLB withdrawing IPs (one issue, not two)](2026-05-03-grafana-metallb-pg_hba.md)
 - [2026-05-02 1Password rate-limit recurrence, the dynamic-inventory bypass](2026-05-02-op-ratelimit-recurrence.md)
 - [2026-04-19 Bitnami public images quietly disappeared](2026-04-19-bitnami-images-removed.md)
