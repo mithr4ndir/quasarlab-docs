@@ -38,13 +38,17 @@ It isn't. `192.168.1.150` is the Nginx Proxy Manager host, and Jellyfin's
 had the truth:
 
 ```
-174.107.175.82   3349 req    remote
-192.168.3.2      2598 req    local
-76.128.141.146   1976 req    remote
-47.198.164.232   1890 req    remote
-70.141.78.32     1844 req    remote
-75.182.152.29     655 req    remote
+<remote-guest-1>   3349 req    remote
+192.168.3.2        2598 req    local
+<remote-guest-2>   1976 req    remote
+<remote-guest-3>   1890 req    remote
+<remote-guest-4>   1844 req    remote
+<remote-guest-5>    655 req    remote
 ```
+
+(Guests' public addresses redacted. Only the local RFC1918 client is shown
+literally. What mattered was that there were six distinct sources, five of them
+off-LAN, not which addresses they were.)
 
 Six to seven real people, five of them remote. The original headcount was right
 and my "clever" correction was wrong.
