@@ -19,6 +19,7 @@ Short, fix-it-now docs derived from real incidents in the lab. Each runbook foll
 
 - [Jellyfin database corruption from ungraceful shutdown](jellyfin-db-corruption.md)
 - [Jellyfin transcoding and ffmpeg](jellyfin-transcoding-ffmpeg.md)
+- [Jellyfin transcode cache filling the root filesystem](jellyfin-transcode-cache-disk-full.md)
 - [GPU passthrough D3cold recovery (jellyfin / pve2 / RTX 2080 Ti)](gpu-passthrough-d3cold-recovery.md)
 
 ## Secrets and quotas
