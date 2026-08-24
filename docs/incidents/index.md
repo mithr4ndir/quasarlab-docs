@@ -13,6 +13,7 @@ Format for every incident:
 
 ## Index, newest first
 
+- [2026-08-24 Jellyfin transcode cache filled root, plus the pipeline shipping unmerged code](2026-08-24-jellyfin-transcode-disk-exhaustion.md)
 - [2026-05-27 Jellyfin GPU D3cold passthrough hang + K620 fallback crash-loop](2026-05-27-jellyfin-gpu-d3cold-passthrough.md)
 - [2026-05-03 Grafana down + MetalLB withdrawing IPs (one issue, not two)](2026-05-03-grafana-metallb-pg_hba.md)
 - [2026-05-02 1Password rate-limit recurrence, the dynamic-inventory bypass](2026-05-02-op-ratelimit-recurrence.md)
