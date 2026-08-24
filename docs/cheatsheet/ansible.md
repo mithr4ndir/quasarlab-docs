@@ -65,7 +65,8 @@ The vault password lives in a `pass`/`gopass` entry locally and is referenced vi
 
 ## Scheduled runs deploy `main`, not your checkout
 
-Two hourly timers on cmd_center1 (`ansible-proxmox`, `ansible-security`) run
+Two timers on cmd_center1 run at different cadences (`ansible-proxmox` hourly,
+`ansible-security` every 30 minutes). Both run
 from a **dedicated automation checkout**, force-synced to its remote ref before
 every run:
 
@@ -85,9 +86,14 @@ systemctl cat ansible-proxmox.service | grep -E 'ExecStart|WorkingDirectory'
 ansible-playbook playbooks/cmd_center.yml --tags ansible_timers --diff
 ```
 
-!!! warning "Unmerged work is not deployed, and is actively reverted"
-    Because runs pin to `origin/main`, a change only sticks once merged, and
-    anything applied from an unmerged branch is undone on the next run.
+!!! warning "Unmerged work is not deployed. Undoing it is a separate job."
+    Because runs pin to `origin/main`, a change only sticks once merged.
+
+    But the next run only reconciles what `main` **declares**. A templated file
+    comes back; a purged package, a deleted directory or a service restart does
+    not, because those tasks do not exist in `main` to reverse them. After an
+    accidental deploy, read the `changed:` lines in the run log and clean up the
+    irreversible parts by hand.
 
 `~/code/ansible-quasarlab` is the **operator** tree. Keep any branch checked out
 there; timers do not read it. Manual `ansible-playbook` runs *do*, so a manual
