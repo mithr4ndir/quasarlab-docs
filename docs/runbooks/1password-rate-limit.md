@@ -125,7 +125,12 @@ kubectl -n external-secrets scale deploy external-secrets-webhook --replicas=1
 kubectl annotate externalsecret <name> -n <ns> force-sync=$(date +%s) --overwrite
 ```
 
-The kill switch clears itself once a free quota read shows more than 200 remaining, so the ansible timers resume without a manual step. Before re-enabling anything you disabled by hand, confirm attribution shows no unexpected consumer.
+The kill switch clears itself once a free quota read shows more than 200 remaining. That does **not** restart timers you disabled in "Stop the bleed". Once attribution shows no unexpected consumer, re-enable them explicitly:
+
+```bash
+ssh command-center1 'sudo systemctl enable --now ansible-proxmox.timer ansible-security.timer'
+ssh command-center1 'systemctl list-timers "ansible-*"'
+```
 
 ## Why creating another service account does not help
 
@@ -158,4 +163,4 @@ The dynamic inventory bypass was fixed in ansible-quasarlab#129 (measured at 0 r
 - **Two limits, two scopes.** Hourly is per-token; daily is per-account. Confusing them costs hours.
 - **`op service-account ratelimit` is free.** It is the one call you can always make. Use it before doing anything else.
 - **The retry loop is the amplifier.** ESO and any ansible re-fork can burn a clean budget in under an hour. Stop the retries, then wait.
-- **Don't probe to "see if it cleared."** Every probe is a real call, and every real call resets the rolling window.
+- **Don't probe with real reads to "see if it cleared."** Every `op read` spends quota you do not have. The status call `op service-account ratelimit` is free, so use that instead.
