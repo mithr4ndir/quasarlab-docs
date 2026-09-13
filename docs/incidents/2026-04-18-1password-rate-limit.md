@@ -3,6 +3,13 @@
 **Date:** 2026-04-18
 **Severity:** S2. ESO sync paralyzed for hours, several Discord-routed alerts delayed, no data loss.
 
+!!! note "Update 2026-09-13"
+    A later investigation found another consumer on command-center1: `~/.bashrc`
+    ran an uncached `op read` for every SSH command, costing 2 reads per session.
+    It was removed on 2026-09-13. It was likely already adding to the burn here,
+    but its share was never measured. See
+    [2026-09-12: two reads for every SSH session](2026-09-12-op-quota-shell-profile.md).
+
 ## Symptom
 
 - ExternalSecret resources stuck in `SyncedFalse` across the cluster.
@@ -90,7 +97,7 @@ Also exposed as a Prometheus metric: `onepassword_killswitch_active`, alertable.
 
 ### Secret cache (PRs #105, #106)
 
-`scripts/lib/op-secret-cache.sh` adds a file-backed cache at `/var/lib/ansible-quasarlab/secrets/` (mode 0700, files mode 0600). 12-hour TTL, stale-on-failure fallback. Wrappers call `load_cached_secrets` once at the top of each playbook to populate every needed secret as an env var. Playbook tasks that previously did `command: op read ...` switched to `lookup('env', X)` with `assert: that: lookup('env', X) | length > 0` for fail-fast behavior on empty values.
+`scripts/lib/op-secret-cache.sh` adds a file-backed cache in a restricted local directory (mode 0700, files mode 0600). 12-hour TTL, stale-on-failure fallback. Wrappers call `load_cached_secrets` once at the top of each playbook to populate every needed secret as an env var. Playbook tasks that previously did `command: op read ...` switched to `lookup('env', X)` with `assert: that: lookup('env', X) | length > 0` for fail-fast behavior on empty values.
 
 This cuts ansible's baseline from ~25/hr to 0 on cache hits, ~8/day on cache misses. Effectively eliminated as a quota consumer for the steady-state case.
 

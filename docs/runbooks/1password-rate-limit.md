@@ -39,20 +39,47 @@ token      read          1000     0       1000         N/A
 account    read_write    1000     1000    0            5 hours from now
 ```
 
-The "RESET" column tells you when the rolling 24h window will free up the quota. The CLI's other error messages (`Try again in  seconds`) truncate the number; do not rely on them.
+The "RESET" column tells you when the 24-hour window rolls over and frees the quota (on this account, about 02:51 UTC). The CLI's other error messages (`Try again in  seconds`) truncate the number; do not rely on them.
 
-Then identify who is consuming quota:
+Then find who is spending it. Run everything below on command-center1.
+
+**1. Attribution.** `op` calls made through the logging wrapper are counted per consumer:
 
 ```bash
-# ESO controller pods, recent reconcile activity:
+# Top consumers, last hour
+curl -s 'http://192.168.1.230:9090/api/v1/query' \
+  --data-urlencode 'query=topk(10, sum by (consumer, subcommand) (increase(onepassword_op_invocations_total[1h])))' | jq .
+
+# Raw records, newest last
+tail -n 50 /var/log/op-shim/op-invocations.log | jq -c '{ts, consumer, chain, subcommand}'
+```
+
+**2. Burst not explained by attribution?** Reconcile against the account and token counters, then measure one suspect operation against the free status call:
+
+```bash
+before=$(op service-account ratelimit | awk '/account/{print $4}')
+ssh command-center1 true          # or: one playbook task, one script, one sync
+after=$(op service-account ratelimit | awk '/account/{print $4}')
+echo "cost: $((after - before)) reads"   # expect 0
+```
+
+A clean `strace -f` or process list does not clear SSH-driven work: shells that `sshd` starts are outside the caller's process tree, even on the same host ([2026-09-12](../incidents/2026-09-12-op-quota-shell-profile.md)).
+
+**3. Other places to look:**
+
+```bash
+# ESO controller, recent reconcile activity
 kubectl -n external-secrets logs -l app.kubernetes.io/name=external-secrets --tail=200 \
   | grep -iE "1password|onepassword|rate"
 
-# Process tree on command-center1: who is still calling op?
-ssh command-center1 'ps -eo pid,ppid,cmd --forest | grep -E "(op |op-|ansible-playbook|run-)" | grep -v grep'
+# Long-running callers, names only (a snapshot: misses short calls)
+ps -eo pid,ppid,comm --forest | grep -E "op|ansible|run-" | grep -v grep
 
-# The Prometheus collector exports onepassword_ratelimit_remaining; trend over hours/days:
-# (open the Grafana 1P quota dashboard, or)
+# Shell startup files must never call op: every SSH command would pay for it.
+# Lists matching files only, and ignores comment lines.
+grep -lE '^[^#]*\bop[[:space:]]+(read|inject|item)\b' ~/.bashrc ~/.profile /etc/profile.d/*.sh 2>/dev/null
+
+# Quota trend (or the Grafana 1P quota dashboard)
 curl -s 'http://192.168.1.230:9090/api/v1/query?query=onepassword_ratelimit_remaining' | jq .
 ```
 
@@ -78,7 +105,7 @@ ssh command-center1 'scripts/op-killswitch-status.sh trip'
 
 ## Wait it out
 
-The 24h account cap is the long pole. From `RESET: N hours from now`, that is when it lifts. Do not poll. Do not "just check if it cleared yet." Every probe call was free above the limit, but every actual `op read` you trigger will reset the rolling window.
+The 24h account cap is the long pole. From `RESET: N hours from now`, that is when it lifts. Do not poll. Do not "just check if it cleared yet." Every probe call was free above the limit, but every actual `op read` you trigger spends quota you do not have.
 
 After the cap recovers:
 
@@ -98,7 +125,7 @@ kubectl -n external-secrets scale deploy external-secrets-webhook --replicas=1
 kubectl annotate externalsecret <name> -n <ns> force-sync=$(date +%s) --overwrite
 ```
 
-Re-enable the ansible timers **only after** confirming Phase 1 of the secrets-IaC rollout has shipped. The 2026-05-02 incident was caused by re-enabling the timers while the dynamic Proxmox inventory still calls `op read` per fork.
+The kill switch clears itself once a free quota read shows more than 200 remaining, so the ansible timers resume without a manual step. Before re-enabling anything you disabled by hand, confirm attribution shows no unexpected consumer.
 
 ## Why creating another service account does not help
 
@@ -114,15 +141,17 @@ The only way to raise the daily ceiling is to upgrade the 1Password tier:
 
 ## Long-term mitigations already in place
 
-- **Kill switch** at `/var/lib/ansible-quasarlab/1p-killswitch`, 24h TTL. All ansible wrappers honor it. Trips automatically when any script observes "Too many requests" in stderr.
-- **Secret cache** at `/var/lib/ansible-quasarlab/secrets/`, 12h TTL, populated once per playbook run via `scripts/lib/op-secret-cache.sh`.
+- **Kill switch** at `/var/lib/ansible-quasarlab/1p-killswitch`. All ansible wrappers honor it. It trips when a wrapper finds "Too many requests" anywhere in a run's captured output (which can false-trip on `--diff` text, see ansible-quasarlab#160), and clears once a free quota read shows more than 200 remaining (24h at most).
+- **Secret cache:** restricted local files, 48h TTL, locked against concurrent misses, populated once per playbook run via `scripts/lib/op-secret-cache.sh`.
+- **Attribution wrapper** on command-center1 exports `onepassword_op_invocations_total{consumer,caller,unit,subcommand}`.
+- **Shell startup files:** `/etc/profile.d/op-ansible-env.sh` is templated without `op`, and a task fails the play if `op read` reappears in `~/.bashrc`.
 - **ESO refresh interval** bumped from 1h to 24h on every ExternalSecret. The retry loop is unaffected by this and is the unsolved part.
-- **Quota collector** running on `command-center1` (`op-quota-collector.timer`, every 5 min, exports `onepassword_ratelimit_*` gauges). Alerts at 50% / 80% / 95% of the daily cap.
+- **Quota collector** running on `command-center1` (`op-quota-collector.timer`, every 5 min, exports `onepassword_ratelimit_*` gauges). Alerts at 50% (warning) / 80% / 95% of the daily cap, plus a burn-rate alert on reads per hour.
 - **Operational rule for Claude:** one `op` call per session, only when explicitly requested by the user. Never loop or re-probe.
 
 ## Outstanding work
 
-The dynamic Proxmox inventory still calls `op read` per fork at inventory resolution time, bypassing the secret cache. This is the structural cause of the 04-18 and 05-02 recurrences. The proper fix is to vault the Proxmox API token in `group_vars/vault.yml` so ansible reads it once at play start. Tracked as Phase 1 of the 04-22 secrets-IaC rollout.
+The dynamic inventory bypass was fixed in ansible-quasarlab#129 (measured at 0 reads on 2026-09-13), and the shell startup read in [2026-09-12](../incidents/2026-09-12-op-quota-shell-profile.md). Still open: the source of the 2026-09-12 bursts, and the kill switch output scan false-tripping on `--diff` text (ansible-quasarlab#160).
 
 ## Patterns worth knowing
 
