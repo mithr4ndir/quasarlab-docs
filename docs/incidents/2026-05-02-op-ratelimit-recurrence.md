@@ -3,6 +3,13 @@
 **Date:** 2026-05-02
 **Severity:** S2. Same blast radius as the [2026-04-18 incident](2026-04-18-1password-rate-limit.md), worse because it was a recurrence the structural fixes had been supposed to prevent.
 
+!!! note "Update 2026-09-13"
+    A later investigation found another consumer on command-center1: `~/.bashrc`
+    ran an uncached `op read` for every SSH command, costing 2 reads per session.
+    It was removed on 2026-09-13. It was likely already adding to the burn here,
+    but its share was never measured. See
+    [2026-09-12: two reads for every SSH session](2026-09-12-op-quota-shell-profile.md).
+
 ## Symptom
 
 The 1Password Grafana panel showed `account read_write USED: 1000/1000`, REMAINING 0, RESET 5 hours from now. ESO had silently been retrying for the entire afternoon. The user noticed because their "1pass quota dashboard, no data" prompt and the alerting was getting noisy.
