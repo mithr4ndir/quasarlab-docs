@@ -65,9 +65,22 @@ kubectl wait pod -n automation -l app=claude-bridge          --for=condition=Rea
 
 ## Follow-up
 
-- **Persist in Ansible** (`ansible-quasarlab/labctl-runs/postgres/`) so a config run does not revert it.
+- **Persist in Ansible** so a config run does not revert it. The rules live in `postgresql_hba_entries` in `roles/postgresql/defaults/main.yml`; `roles/postgresql/tasks/main.yml` renders `templates/pg_hba.conf.j2` from that list and notifies a reload. (`labctl-runs/postgres/` no longer exists. It was removed from `ansible-quasarlab` in `2ce0c19`. The playbook is `playbooks/postgresql.yml`.)
 - **Move toward `hostssl` + `ssl_mode=require`** in app configs so the LAN hop is encrypted. Then change the rules above from `host` to `hostssl`.
 - **Track what introduced the SNAT.** If the old behavior had pod IPs reaching Postgres directly, a Calico upgrade or `natOutgoing` change is the most likely cause. Check `dpkg.log` and Calico release notes for the upgrade window.
+
+!!! danger "The template is authoritative, so the fix above is temporary"
+    `pg_hba.conf.j2` renders the **whole file** from `postgresql_hba_entries`. Anything appended on the box by hand is discarded the next time `playbooks/postgresql.yml` runs, without warning, and the outage comes straight back.
+
+    That gap was real: the `192.168.1.89`, `.90` and `.91` rules from the
+    2026-05-03 fix lived only on the host and not in the role, so any
+    Postgres play would have re-broken exactly what this runbook fixes.
+    **Fixed 2026-09-19** in ansible-quasarlab#194, which also added a test
+    that renders the template and fails if a node IP goes missing. The
+    rendered file now matches the live host line for line.
+
+    The warning above still stands for **any** rule you add by hand. Put it
+    in `postgresql_hba_entries` or it is temporary.
 
 ## Why this happens at all
 

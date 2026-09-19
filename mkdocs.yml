@@ -78,6 +78,7 @@ nav:
   - Incidents:
       - incidents/index.md
       - 2026-09-12 1Password quota, two reads per SSH session: incidents/2026-09-12-op-quota-shell-profile.md
+      - 2026-09-19 NFSv4 callback deadlock: incidents/2026-09-19-nfsv4-callback-deadlock.md
       - 2026-08-24 Jellyfin transcode disk exhaustion: incidents/2026-08-24-jellyfin-transcode-disk-exhaustion.md
       - 2026-05-27 Jellyfin GPU D3cold passthrough: incidents/2026-05-27-jellyfin-gpu-d3cold-passthrough.md
       - 2026-05-03 Grafana / MetalLB / pg_hba: incidents/2026-05-03-grafana-metallb-pg_hba.md
@@ -93,6 +94,7 @@ nav:
       - MetalLB IP not answering ARP: runbooks/metallb-no-arp-response.md
       - Grafana CrashLoopBackOff: runbooks/grafana-crashloop.md
       - etcd defrag: runbooks/etcd-defrag.md
+      - NAS reboot with zero VM downtime: runbooks/nas-reboot-evacuate-vm-disks.md
       - Bitnami image 404: runbooks/bitnami-image-404.md
       - Jellyfin DB corruption: runbooks/jellyfin-db-corruption.md
       - Jellyfin transcoding / ffmpeg: runbooks/jellyfin-transcoding-ffmpeg.md
@@ -107,6 +109,7 @@ nav:
       - 0004 Bake monitoring images: decisions/0004-bake-monitoring-images.md
       - 0005 Healthchecks.io deadman: decisions/0005-healthchecks-deadman.md
       - 0006 Database-per-app: decisions/0006-database-per-app.md
+      - 0007 Uptime Kuma out-of-cluster monitor: decisions/0007-uptime-kuma-external-monitor.md
   - Cheatsheet:
       - cheatsheet/index.md
       - kubectl: cheatsheet/kubectl.md

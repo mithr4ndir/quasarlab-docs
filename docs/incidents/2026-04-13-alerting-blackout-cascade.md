@@ -77,7 +77,8 @@ There is still one node left to chase: the alert pipeline still runs *inside* th
 - [x] Boot-race fixed (`wait-truenas-api.sh`).
 - [x] QDevice NSS rebuilt; PVE upgrades applied.
 - [x] Reboot-required gauge timer refresh.
-- [ ] Off-site external probe (Uptime Kuma off-site) so a full cluster-down still pages. Tracked under [decisions/index.md](../decisions/index.md).
+- [x] External probe so a full cluster-down still pages. Shipped 2026-09-19 as [Uptime Kuma on vm117](../decisions/0007-uptime-kuma-external-monitor.md), five months later and only after the gap named here cost another eleven hours. It is **on the LAN and on this Proxmox cluster**, not off-site, which is a deliberate reversal of what this line asked for. See the postscript.
+- [ ] Coverage for the failure modes an on-LAN probe cannot see (house internet, power, the whole Proxmox cluster). Healthchecks.io (ADR 0005) is the only leg outside the house, and 2026-09-19 left its effectiveness unestablished.
 - [ ] CI step that walks every `image:` reference and HEAD-requests the registry, so a future "supply chain rot" failure does not need to be discovered by accident again. Same idea, different scope.
 
 ## What this incident is a good example of
@@ -85,3 +86,17 @@ There is still one node left to chase: the alert pipeline still runs *inside* th
 - A symptom-vs-cause split. "Trading dashboard is down" looked like an app failure; the real failure was the alerting chain that should have told me 9 hours earlier.
 - Three independent SPOFs in the same path. Fixing only the loudest one would have left the other two waiting to re-fire.
 - Choosing **structural** fixes (HA, deadman, baked image) over **tweak** fixes (bump retry count, increase replica memory). The fix list looks heavier upfront but doesn't require the same diagnosis a year later.
+
+## Postscript, 2026-09-19: the one node left to chase came due
+
+This page ends by naming the gap it did not close: "the alert pipeline still runs *inside* the K8s cluster, so a full cluster-down event will still go silent." On 2026-09-19 that is exactly what happened. An NFSv4 callback deadlock on the NAS wedged Prometheus and left Loki unable to ingest, and the lab ran blind for about eleven hours with nothing alerting. The full write-up is [2026-09-19 NFSv4 callback deadlock](2026-09-19-nfsv4-callback-deadlock.md).
+
+Two corrections to what I wrote above, in order of how wrong they were.
+
+**"After the remediation, every leg of the alert path has an external observer or external pin" was too strong.** The three legs I listed were real fixes, but all three protect the *delivery* of an alert. None of them observes whether Prometheus is still evaluating rules. Healthchecks.io was supposed to be the backstop for exactly that, and on 2026-09-19 it did not produce a response for eleven hours. Whether it fired and was missed, or never fired at all, is still not established; that is the open question at the top of the 2026-09-19 page and it should not be treated as settled.
+
+**"Off-site Uptime Kuma" was the wrong shape, and I only found that out by doing it.** What shipped is an on-LAN VM, vm117, running Uptime Kuma outside the Kubernetes cluster, with eight monitors covering Prometheus, Alertmanager, Grafana, Loki, the three kube-apiservers, and an NFS read probe. It posts to Discord `#alerts` directly rather than through `discord-alert-proxy`, because the proxy runs in the cluster being watched. Its disk is deliberately not on NFS. The reasoning for on-LAN over off-site is in [ADR 0007](../decisions/0007-uptime-kuma-external-monitor.md): an off-site probe cannot reach the LAN-only endpoints without opening a tunnel through the perimeter, and a monitor you cannot repair without the thing it monitors is a poor monitor of last resort.
+
+So the gap is narrower now, not closed. Kuma covers cluster-down. It does not cover house-internet-down, power-down, or the loss of the Proxmox cluster it shares with everything it watches. ADR 0007 also records the part nothing enforces: vm117's hypervisor placement is currently the right way round by luck rather than by constraint.
+
+The lesson this page taught in April holds, and it needed restating five months later in a second language: **don't host the alerter on the thing it monitors.** In April that meant the Discord proxy. In September it meant Prometheus itself.

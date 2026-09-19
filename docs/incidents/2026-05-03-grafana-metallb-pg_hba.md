@@ -130,7 +130,7 @@ The incident did **not** trigger a Discord alert, which is its own follow-up: I 
 - [ ] Identify which package update at ~03:00 UTC flipped the SNAT behavior. `dpkg.log` and `journalctl --since "03:00 UTC"` on the K8s nodes.
 - [ ] Move Grafana and claude-bridge to `ssl_mode=require`, switch the matching `pg_hba.conf` entries to `hostssl`.
 - [ ] Add a "long-running readiness failure" Alertmanager rule so a quiet readiness regression actually pages.
-- [ ] Add an external-vantage probe (Uptime Kuma off-site) so the next time the entire cluster is silent for a reason, **something** still tells me. See the [Uptime Kuma decision note](../decisions/index.md).
+- [x] Add an external-vantage probe so the next time the entire cluster is silent for a reason, **something** still tells me. Shipped 2026-09-19 as [Uptime Kuma on vm117](../decisions/0007-uptime-kuma-external-monitor.md), after the [NFSv4 deadlock](2026-09-19-nfsv4-callback-deadlock.md) proved the point over eleven silent hours. Note the reversal: it is **on the LAN**, not off-site, for the reasons in ADR 0007, so it sees cluster-down but not site-down.
 
 ## What this incident is a good example of
 

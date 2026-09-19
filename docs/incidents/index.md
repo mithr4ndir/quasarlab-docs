@@ -13,6 +13,7 @@ Format for every incident:
 
 ## Index, newest first
 
+- [2026-09-19 NFSv4 callback deadlock, 11 hours blind, and the outage I caused fixing it](2026-09-19-nfsv4-callback-deadlock.md)
 - [2026-09-12 1Password quota burn, two reads for every SSH session](2026-09-12-op-quota-shell-profile.md)
 - [2026-08-24 Jellyfin transcode cache filled root, plus the pipeline shipping unmerged code](2026-08-24-jellyfin-transcode-disk-exhaustion.md)
 - [2026-05-27 Jellyfin GPU D3cold passthrough hang + K620 fallback crash-loop](2026-05-27-jellyfin-gpu-d3cold-passthrough.md)
