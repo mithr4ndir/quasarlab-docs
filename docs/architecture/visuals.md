@@ -31,7 +31,7 @@ flowchart TB
     end
 
     PG[("Postgres 16<br/>.123")]
-    UK["Uptime Kuma<br/>.129<br/>idle"]
+    UK["Uptime Kuma<br/>.129<br/>out-of-cluster monitor"]
 
     subgraph PVE["Proxmox hosts"]
       direction LR

@@ -18,7 +18,7 @@ LAN 192.168.1.0/24
     ▼
   Kubernetes cluster (kubeadm, Calico, ArgoCD)
     apiserver VIP   192.168.1.20:6443
-    k8cluster1      192.168.1.90  ── pve1
+    k8cluster1      192.168.1.90  ── pve
     k8cluster2      192.168.1.89  ── pve2
     k8cluster3      192.168.1.91  ── pve2
                        │  pod->external = SNAT to node IP
@@ -26,7 +26,7 @@ LAN 192.168.1.0/24
   Postgres 16 VM      192.168.1.123  ── pve
   Uptime Kuma VM      192.168.1.129  ── pve  (out-of-cluster monitor)
   TrueNAS             192.168.1.15   (iSCSI: VM disks, NFS: K8s PVCs + media)
-  Proxmox pve1        192.168.1.10
+  Proxmox pve        192.168.1.10
   Proxmox pve2        192.168.1.11
 ```
 
@@ -36,14 +36,14 @@ A higher-fidelity diagram and screenshots live in [Visuals](visuals.md).
 
 | Host | IP | Role |
 |------|----|------|
-| pve1 | 192.168.1.10 | Proxmox node, hosts most VMs |
+| pve | 192.168.1.10 | Proxmox node, hosts most VMs |
 | pve2 | 192.168.1.11 | Proxmox node, hosts the rest |
 | K8s API | 192.168.1.20 | kube-apiserver VIP |
 | k8cluster1 | 192.168.1.90 | K8s worker / control plane |
 | k8cluster2 | 192.168.1.89 | K8s worker / control plane (on pve2, with k8cluster3) |
 | k8cluster3 | 192.168.1.91 | K8s worker / control plane |
 | postgresql | 192.168.1.123 | Postgres 16, shared backend for Grafana, claude-bridge, and other stateful apps |
-| uptime-kuma | 192.168.1.129 | Out-of-cluster monitor, live since 2026-09-19 (see [ADR 0007](../decisions/0007-uptime-kuma-external-monitor.md)). On **pve**, deliberately not on pve2 with the etcd majority |
+| uptime-kuma | 192.168.1.129 | Out-of-cluster monitor, live since 2026-09-19 (see [ADR 0007](../decisions/0007-uptime-kuma-external-monitor.md)). On **pve**, while the etcd majority sits on pve2. Nothing enforces that, see [ADR 0007](../decisions/0007-uptime-kuma-external-monitor.md) |
 | truenas | 192.168.1.15 | TrueNAS. VM disks over iSCSI, Kubernetes PVCs and media over NFS. See [Storage](#storage) |
 | NPM | LAN | nginx-proxy-manager, TLS termination and routing for `*.herro.me` |
 
@@ -78,9 +78,28 @@ broken appliance, over the service that still worked.
   `iqn.2005-10.org.freenas.ctl:proxmox-cluster`, backed by
   `tank/proxmox_zfs_vms` with a 16k block size.
 - The Kubernetes StorageClass `k8s-nfs` currently mounts with
-  **`nfsvers=4.1`**. Moving it to NFSv3 is the pending fix from the incident
-  (k8s-argocd#213): v3 is stateless, with no delegations, callbacks or
-  sessions, so that entire deadlock class disappears.
+  **`nfsvers=4.1, hard, timeo=600, retrans=2`**
+  (`k8s-argocd/infrastructure/nfs/values.yaml`). Moving it to NFSv3 is the
+  pending fix from the incident (k8s-argocd#213): v3 is stateless, with no
+  delegations, callbacks or sessions, so that entire deadlock class
+  disappears.
+
+!!! warning "v3 removes the deadlock class, not the ability of clients to wedge"
+    The version change and the **`hard`** option are different problems.
+    NFSv3 kills the callback and session machinery, so 2026-09-19 cannot
+    recur in that form. But with `hard`, a stalled server still parks
+    processes in **uninterruptible sleep** with no signal able to kill them.
+    That is what a load average of 76 at 4% CPU was. Read "move to v3" as
+    "that deadlock goes away", never as "clients can no longer wedge".
+
+!!! danger "There are two NFS paths, and only one of them has mount options"
+    The Kubernetes PVC path goes through the provisioner above. The media
+    share does not. `k8s-argocd/apps/media/media-pv-nfs.yaml` mounts
+    `192.168.1.15:/mnt/tank/media` with **no `mountOptions` at all**, so it
+    negotiates whatever the kernel picks.
+
+    Changing `infrastructure/nfs/values.yaml` alone therefore leaves media on
+    NFSv4.x. Any version migration has to touch both.
 
 ### The pool
 
@@ -93,6 +112,21 @@ broken appliance, over the service that still worked.
     bulk operations against the pool are rate limited (see the
     [NAS reboot runbook](../runbooks/nas-reboot-evacuate-vm-disks.md)) and
     why `dmesg` on the NAS is part of triage for anything storage-shaped.
+
+!!! danger "The Postgres backups live on the appliance you would need them to recover from"
+    [ADR 0002](../decisions/0002-external-postgres.md) ships `pgBackRest` to a
+    TrueNAS dataset. That is the direct corollary of "everything stateful
+    lands on one appliance": the database, its backups and every VM disk share
+    a single failure domain. The periodic restore drill proves the backups are
+    *restorable*, not that they are *reachable* when the NAS is the casualty.
+
+### Boot order depends on the NAS
+
+`pve-guests` cannot start VMs until the TrueNAS API answers, which is what
+`wait-truenas-api.sh` exists for. A hypervisor that boots faster than the NAS
+will otherwise try to start VMs whose disks do not exist yet. This bit during
+the [2026-04-13 outage](../incidents/2026-04-13-alerting-blackout-cascade.md)
+and it is written up there in detail.
 
 ### Node-local storage, and one trap
 
