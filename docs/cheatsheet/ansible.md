@@ -50,7 +50,7 @@ The vault password lives in a `pass`/`gopass` entry locally and is referenced vi
 ## Roles I lean on
 
 - `common/os/debian` — base hardening, NTP, unattended upgrades, non-root user.
-- `k8s/docker` — Docker engine for VM-resident services (uptime-kuma, registry, etc.).
+- `k8s/docker`: installs Debian's `docker.io`, and is used by `playbooks/k8s_init.yml` only. On Debian 12 that package is 20.10.24 with **no compose plugin**, which is why Uptime Kuma does not use it: `roles/uptime_kuma/tasks/docker.yml` installs Docker CE from Docker's own apt repo, with the signing key pinned by full fingerprint.
 - `monitoring/node_exporter` — Prometheus node_exporter on every VM.
 - `monitoring/filebeat` (now `vector`) — log shipping to the in-cluster aggregator.
 
@@ -107,6 +107,6 @@ fleet](../incidents/2026-08-24-jellyfin-transcode-disk-exhaustion.md).
 ## Integration with the rest of the lab
 
 - Postgres lives on a VM and is owned by Ansible. Manual edits during incidents (like the [pg_hba fix](../runbooks/pg-hba-rejecting-k8s-pods.md)) must be back-ported to the role the same day.
-- Uptime Kuma's VM had a stub playbook that never completed end-to-end, which is how the VM ended up idle for 18 days. ([decision pending](../decisions/index.md))
+- Uptime Kuma is deployed by `playbooks/uptime-kuma.yml` through `scripts/run-uptime-kuma.sh`, and vm117 lives in `inventory.static.ini` deliberately: the monitor of last resort has to be deployable with the Proxmox API, the dynamic inventory and the Proxmox token all unavailable. The wrapper is operator-run, never on a timer, and passes an allowlist of `ansible-playbook` options rather than a denylist, because abbreviations (`--lim`) and clustered short flags (`-vi x.yml`) can otherwise smuggle in another inventory. The earlier labctl run left the VM provisioned but never started: it used `k8s/docker`, so its final `docker compose up -d` failed with `docker: 'compose' is not a docker command`. See [ADR 0007](../decisions/0007-uptime-kuma-external-monitor.md) and the [2026-09-19 incident](../incidents/2026-09-19-nfsv4-callback-deadlock.md).
 - Anything K8s-related lives in ArgoCD, not Ansible. Ansible bootstraps the K8s VMs only.
 - Alerting on the timers themselves: `AnsibleRunStale`, `AnsiblePlaybookFailed`, and `AnsibleRepoSyncFailed` (critical: a run refused to start because it could not pin its checkout, so nothing is being enforced anywhere).

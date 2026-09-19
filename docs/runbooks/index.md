@@ -15,6 +15,10 @@ Short, fix-it-now docs derived from real incidents in the lab. Each runbook foll
 - [etcd database bloat and defragmentation](etcd-defrag.md)
 - [Bitnami image 404 / `ImagePullBackOff`](bitnami-image-404.md)
 
+## Storage
+
+- [Reboot the NAS with zero VM downtime](nas-reboot-evacuate-vm-disks.md)
+
 ## Apps
 
 - [Jellyfin database corruption from ungraceful shutdown](jellyfin-db-corruption.md)
