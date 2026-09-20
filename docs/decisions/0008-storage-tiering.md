@@ -145,9 +145,13 @@ Every vdev then survives the loss of any single bad-batch drive. Today
   rebooted the NAS with zero VM downtime on 2026-09-19, and the same
   throttle and etcd cautions apply. See the
   [runbook](../runbooks/nas-storage-tiering-migration.md).
-- **The rebalance requires resilvering**, which is sustained write load, which
-  is exactly the trigger for the bad drives' bus dropouts. It must be done
-  deliberately and watched, not opportunistically.
+- **The rebalance requires resilvering**, which puts real load on drives that
+  have failed before. The trigger for those failures is **not established**
+  (see the [failure analysis](../incidents/2026-09-19-nfsv4-callback-deadlock.md#about-the-drive-failures-trigger-unknown)),
+  so this is not "avoid writes and it will be fine". It is "these drives fail
+  unpredictably, so do one vdev at a time and watch `dmesg`, because a
+  dropout during a resilver on an already-degraded vdev is how a pool is
+  lost".
 
 ## Validation
 
