@@ -18,6 +18,7 @@ Short, fix-it-now docs derived from real incidents in the lab. Each runbook foll
 ## Storage
 
 - [Reboot the NAS with zero VM downtime](nas-reboot-evacuate-vm-disks.md)
+- [Migrate to tiered NAS storage](nas-storage-tiering-migration.md)
 
 ## Apps
 
