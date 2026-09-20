@@ -314,12 +314,16 @@ Two things made this possible, and neither is "I was careless":
    PVCs backed by the same NAS, Alertmanager runs in the same cluster, and
    its notification path to Discord (`discord-alert-proxy`) runs in that
    cluster too. Every link in the chain was downstream of the failure.
-4. **Why was there no probe from outside that failure domain?**
+4. **Why did the off-site deadman not catch it either?**
+   Its alert threshold was 48 hours, not the 10 minutes its ADR documented,
+   and it notified an inbox nobody reads. It was checking every 2 minutes and
+   could not alert for two days.
+5. **Why was there no probe from outside that failure domain?**
    Uptime Kuma had been provisioned as a VM and **never started**. The gap
    was known: it sat in this site's own "Active questions (not yet ADR'd)"
    list, described as something to decide "before the next round of
    monitoring changes".
-5. **Why was a known monitoring gap tracked as an open question instead of
+6. **Why was a known monitoring gap tracked as an open question instead of
    as work?**
    Because it was framed as a design choice still to be made (VM,
    in-cluster, or off-site) rather than as a missing safety net. Framing it
@@ -329,18 +333,31 @@ Two things made this possible, and neither is "I was careless":
 it monitored, and the one compensating control was parked as an open question
 rather than built.
 
-!!! danger "Unresolved, and the most important follow-up"
-    ADR 0005 put an off-site deadman switch in place: Alertmanager's
-    `Watchdog` alert pings Healthchecks.io every cycle, and Healthchecks.io
-    emails when the pings stop. **That should have paged within about ten
-    minutes of 07:05, and it did not produce a response for eleven hours.**
+!!! success "Answered 2026-09-20: the grace period was 48 hours"
+    [ADR 0005](../decisions/0005-healthchecks-deadman.md) put an off-site
+    deadman in place: Alertmanager's `Watchdog` pings Healthchecks.io, which
+    alerts when the pings stop. It did not fire, and the reason is worse than
+    a broken integration.
 
-    Whether it fired and was missed, or never fired at all, is **not yet
-    established**, and it is the single most valuable question left from
-    this incident. A deadman switch that does not wake you is worse than
-    none, because it is load-bearing in the design while contributing
-    nothing. Tracked as a follow-up; do not treat layer 3 as proven until
-    someone tests it deliberately.
+    The heartbeat was checked **every 2 minutes**. The **alert** did not fire
+    until **48 hours** of silence. So an eleven-hour total alerting outage
+    was never close to the threshold. The ADR documents a 10-minute grace
+    period; the deployment had 48 hours, and nothing compared the two for
+    five months.
+
+    **Check cadence is not detection time.** A two-minute heartbeat that
+    cannot alert for two days looks like tight monitoring on every dashboard
+    and is worth nothing for any outage shorter than a weekend. That is the
+    third instance of this exact pattern in this write-up alone.
+
+    It also went to email only, in a secondary inbox that does not get read.
+    A correctly-timed alert would still have been delivered and not seen.
+
+    Corrected 2026-09-20: alert evaluation every 30 minutes, firing after two
+    consecutive bad checks (about an hour worst case), to **Discord and**
+    email. See ADR 0005 for the full correction, including a contradiction in
+    its own validation record that is still unresolved.
+
 
 ### Why did I take down the control plane?
 

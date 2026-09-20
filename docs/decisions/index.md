@@ -40,13 +40,14 @@ Short notes on tradeoffs taken in the lab. Each ADR follows the standard shape:
 
 Still open:
 
-- **Did the Healthchecks.io deadman actually fire on 2026-09-19?**
-  [ADR 0005](0005-healthchecks-deadman.md) should have produced an email
-  within about ten minutes of 07:05, and nothing reached the owner for
-  eleven hours. Whether it fired and was missed, or never fired, is
-  unresolved and is the most valuable open question on this list. A deadman
-  switch that does not wake you is worse than none, because the design
-  leans on it while it contributes nothing.
+- **Prove the corrected deadman actually pages.** The 2026-09-19 question
+  ("did Healthchecks.io fire?") is
+  [answered](0005-healthchecks-deadman.md#correction-and-update-2026-09-20):
+  it did not, because the alert threshold was 48 hours rather than the 10
+  minutes that ADR documented, and it went to an unread inbox. Both are fixed
+  as of 2026-09-20. What is still not done is **testing it**, which is how the
+  original gap survived five months. Stop Alertmanager for just over an hour
+  and confirm the Discord message arrives.
 - **Public read-only Grafana dashboard.** The operational UIs (ArgoCD, homepage, Prometheus, Alertmanager) are intentionally LAN-only. A single curated read-only Grafana dashboard exposed through NPM, with the rest of Grafana login-gated, would be the smallest blast-radius way to give an external viewer a real-time look at the lab. Open: which dashboard, what to redact, whether to put it behind Cloudflare Access for additional gating.
 - **Calico vs Cilium.** Today the lab runs Calico. Cilium would buy me eBPF-based observability and policy, at the cost of one more thing to debug. Defer.
 - **`hostssl + ssl_mode=require` for all Postgres clients.** Already a follow-up from the 2026-05-03 incident.
