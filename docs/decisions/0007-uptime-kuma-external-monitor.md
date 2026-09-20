@@ -5,7 +5,7 @@
 
 ## Context
 
-"Why Uptime Kuma when we already run Alertmanager?" is the obvious question,
+"Why Uptime Kuma when Alertmanager is already running?" is the obvious question,
 and the answer starts with a correction: **Alertmanager is not a monitor.**
 
 Alertmanager routes, groups, deduplicates, inhibits and silences alerts that
@@ -139,15 +139,15 @@ Four containers, all digest-pinned, all non-root:
 | `uptime-kuma` | `louislam/uptime-kuma:2.5.5-slim-rootless`, uid 1000, all capabilities dropped, SQLite on local disk. Publishes nothing. |
 | `autokuma` | Reconciles the monitor definitions in `/opt/uptime-kuma/monitors` into Kuma every 60s. No Docker socket. Monitors are files in Git, not clicks in a UI. |
 | `kuma-proxy` | nginx-unprivileged, uid 101. The **only** published port: TLS on 3001. |
-| `kuma-gate` | Answers the proxy's `auth_request`. Open only while Kuma holds our admin account. |
+| `kuma-gate` | Answers the proxy's `auth_request`. Open only while Kuma holds the admin account I control. |
 
 The gate exists because a fresh Uptime Kuma serves a setup flow in which
 **the first visitor becomes admin**, and it decides that at startup. A Kuma
 restarted onto a lost or wiped database would hand ownership to whoever
 reached it first. The gate holds a websocket to Kuma and permits traffic only
-while `needSetup` is false *and* our own admin login succeeds on the current
+while `needSetup` is false *and* my own admin login succeeds on the current
 connection. Everything else, including Kuma being down, starting, restarting,
-or owned by an account whose password we do not have, is refused. The failure
+or owned by an account whose password I do not hold, is refused. The failure
 direction is always **closed**.
 
 ## Considered

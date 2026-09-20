@@ -382,7 +382,7 @@ rather than built.
 fix is not "be more careful", it is to codify the disks and make the
 constraint visible at the point of decision.
 
-## What we learned
+## What I learned
 
 **Liveness proves nothing.** Every stateless NFS check passed for eleven
 hours while the service did no work. This is the same lesson the Wazuh SIEM
