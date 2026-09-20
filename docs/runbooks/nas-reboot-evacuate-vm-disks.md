@@ -31,7 +31,7 @@ flowchart TB
         REBOOT["Step 3, reboot the NAS<br/>VMs keep running from local NVMe"]
         BACK["Step 4, return all 14 disks to the NAS<br/>qm disk move, live<br/>One disk at a time, 200 MiB/s"]
         DONE["Return complete<br/>All 14 VM disks back on NAS-backed storage<br/>Zero VM downtime"]
-        THROTTLE["Reason for the write throttle<br/>NAS SSDs drop off the SATA bus<br/>under sustained writes"]
+        THROTTLE["Reason for the write throttle<br/>Keeps the migration from starving etcd<br/>and wrecking NFS latency"]
     end
 
     subgraph TRAP["Wrong destination, hit during step 1"]
@@ -104,8 +104,14 @@ pvesh create "/nodes/$node/qemu/$id/move_disk" \
 
 - `--delete 1` removes the source copy only **after** a successful move.
 - `--bwlimit 204800` is a deliberate throttle, roughly 16% of the 10G storage
-  link. The pool contains SSDs that drop off the SATA bus under sustained
-  writes. Going faster risks the very hardware you are trying to protect.
+  link. It keeps the migration from starving etcd and from pushing NFS
+  latency through the roof for everything else on the pool.
+
+    !!! note "It is not protecting the drives, whatever an earlier version of this page said"
+        The throttle was originally justified as protecting the bad-batch
+        SSDs from sustained writes. **That causal claim is not supported.**
+        See the [failure analysis](../incidents/2026-09-19-nfsv4-callback-deadlock.md#about-the-drive-failures-trigger-unknown).
+        The contention argument above stands on its own.
 - Driving it through `pvesh` rather than `qm` means each move runs as a task
   on its own node and survives your SSH session dying.
 

@@ -107,11 +107,21 @@ broken appliance, over the service that still worked.
 (L2ARC) device, roughly 14.7 TB raw.
 
 !!! warning "Not all the drives are trustworthy"
-    Three Inland SSDs from one bad batch repeatedly drop off the SATA bus
-    under sustained writes, and `mirror-3` pairs two of them. This is why
-    bulk operations against the pool are rate limited (see the
-    [NAS reboot runbook](../runbooks/nas-reboot-evacuate-vm-disks.md)) and
-    why `dmesg` on the NAS is part of triage for anything storage-shaped.
+    Three Inland SSDs from one bad batch repeatedly drop off the SATA bus,
+    and `mirror-3` pairs two of them. The drive stops answering, the link
+    cannot be re-established, and it stays gone until a power cycle or a
+    reseat. It is a controller or firmware hang, not media wear: no
+    reallocations, no bad sectors.
+
+    **The trigger is not known.** All three failures are on firmware
+    **VE1R9204**; the two VE1R9004 siblings in the same chassis on the same
+    controllers have never failed. That correlation is strong. A load
+    correlation is **not** established, so `dmesg` on the NAS is part of
+    triage for anything storage-shaped regardless of how busy the pool is.
+
+    They are also slow. Measured 2026-09-20 with `dd ... iflag=direct`:
+    **176 MB/s** on a healthy Inland versus **461 MB/s** on a WD Blue on the
+    same bus.
 
 !!! danger "The Postgres backups live on the appliance you would need them to recover from"
     [ADR 0002](../decisions/0002-external-postgres.md) ships `pgBackRest` to a

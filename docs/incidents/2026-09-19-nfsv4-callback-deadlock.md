@@ -223,7 +223,7 @@ flowchart TB
         REBOOT["Step 3, reboot the NAS<br/>VMs keep running from local NVMe"]
         BACK["Step 4, return all 14 disks to the NAS<br/>qm disk move, live<br/>One disk at a time, 200 MiB/s"]
         DONE["Return complete<br/>All 14 VM disks back on NAS-backed storage<br/>Zero VM downtime"]
-        THROTTLE["Reason for the write throttle<br/>NAS SSDs drop off the SATA bus<br/>under sustained writes"]
+        THROTTLE["Reason for the write throttle<br/>Keeps the migration from starving etcd<br/>and wrecking NFS latency"]
     end
 
     subgraph TRAP["Wrong destination, hit during step 1"]
@@ -270,8 +270,8 @@ Instead, one VM at a time:
 The lane was deliberately serialised and rate-limited to **200 MiB/s**,
 which is roughly 16% of what the 10G storage link can carry. Two reasons,
 both learned the hard way: the pool contains a batch of SSDs that drop off
-the SATA bus under sustained writes, and concurrent disk moves are exactly
-how the control-plane outage below happened.
+the SATA bus (trigger unknown, see below), and concurrent disk moves are
+exactly how the control-plane outage below happened.
 
 Result: **the NAS was rebooted with zero VM downtime.**
 
@@ -381,6 +381,69 @@ rather than built.
 **Root cause:** an undocumented, uncodified storage-placement constraint. The
 fix is not "be more careful", it is to codify the disks and make the
 constraint visible at the point of decision.
+
+## About the drive failures: trigger unknown
+
+Several pages on this site, including earlier versions of this one, said the
+bad-batch Inland SSDs drop off the SATA bus **under sustained writes**. That
+causal claim is **not supported by the evidence** and is retracted here.
+
+### What the evidence does support
+
+The failure is a controller or firmware hang, not media wear. The drive stops
+answering, the link cannot be re-established after about 60 seconds of
+retries, and it stays gone until a power cycle or reseat. No reallocations,
+no bad sectors.
+
+The correlation is with **firmware**, and it is strong:
+
+| Firmware | Drives | Failures |
+|---|---|---|
+| **VE1R9204** | 3 | **3 of 3** |
+| VE1R9004 | 2 | 0 of 2 |
+
+Same model, same capacity, same chassis, same controllers, bought together.
+Three WD Blue SA510 in the same box have also never failed.
+
+### Why "sustained writes" does not hold
+
+1. **The timing does not fit.** Failures at 2025-12-31 10:51, 2026-02-10
+   10:00, 2026-09-03 **04:10**, then 09-13 and 09-14. Months apart, one in
+   the middle of the night. No clustering around heavy-write events.
+2. **"It died during a write" is close to what chance predicts.** The logs do
+   show `failed command: WRITE FPDMA QUEUED`, but on a pool accepting writes
+   that is the most common queued command. A controller that hangs will hang
+   on whatever is in flight. It says a write was *present*, not *causal*.
+3. **The experiment already ran, accidentally.** The move-back on the night
+   of 2026-09-19 pushed roughly **660 GB of sustained writes at up to
+   200 MiB/s over about two hours**, after the reboot, which is the heaviest
+   sustained write load this pool has seen in months. **Zero bus errors.**
+   If sustained writes were the trigger, that should have fired.
+
+### What this changes
+
+- **The 200 MiB/s migration throttle was not protecting the drives.** It is
+  still worth keeping, because it stops a migration starving etcd and
+  wrecking NFS latency for everything else, but it was justified with a
+  mechanism that cannot be evidenced.
+- **Waiting for a quiet pool is not a mitigation.** If load is not the
+  trigger, a resilver during quiet hours is no safer than one during busy
+  hours. The mitigation is redundancy placement and watching `dmesg`.
+- **The RMA case gets stronger, not weaker.** A firmware-correlated
+  controller hang with a clean control group is a better warranty argument
+  than a load-dependent one.
+
+### How this got into five documents
+
+I wrote it once, confidently, from a plausible reading of "the drive accepts
+a write, stops responding" in the RMA pack, and then propagated it into an
+ADR, two runbooks, an architecture page and a GitHub issue. A documentation
+review flagged the phrase as an unverifiable causal claim and **I did not
+follow it up**. It took the owner asking "can you really correlate a lot of
+writes with the disks going offline?" to make me check.
+
+A plausible mechanism, repeated in enough places, starts to look like a
+finding. That is the same failure as a green test that never ran.
 
 ## What I learned
 

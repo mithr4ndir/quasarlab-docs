@@ -16,9 +16,14 @@ independently useful. Stop after any of them.
 | 4. Rebalance `tank` mirrors | **Highest** | None, but resilvers | Per-drive |
 
 !!! danger "Stage 4 is the one that can lose data"
-    Resilvering is sustained write load, and sustained write load is exactly
-    what makes the bad-batch drives drop off the SATA bus. Do one vdev at a
-    time, watch `dmesg`, and never start it while another stage is in flight.
+    Resilvering puts real load on drives that have failed before, and a
+    dropout during a resilver on an already-degraded vdev is how a pool is
+    lost. Do one vdev at a time, watch `dmesg`, and never start it while
+    another stage is in flight.
+
+    Note what this is **not** claiming. The trigger for those failures is
+    unknown, so waiting for a quiet moment is not a mitigation. See the
+    [failure analysis](../incidents/2026-09-19-nfsv4-callback-deadlock.md#about-the-drive-failures-trigger-unknown).
 
 ## Before anything
 
