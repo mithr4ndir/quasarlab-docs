@@ -95,6 +95,7 @@ nav:
       - Grafana CrashLoopBackOff: runbooks/grafana-crashloop.md
       - etcd defrag: runbooks/etcd-defrag.md
       - NAS reboot with zero VM downtime: runbooks/nas-reboot-evacuate-vm-disks.md
+      - Tiered NAS storage migration: runbooks/nas-storage-tiering-migration.md
       - Bitnami image 404: runbooks/bitnami-image-404.md
       - Jellyfin DB corruption: runbooks/jellyfin-db-corruption.md
       - Jellyfin transcoding / ffmpeg: runbooks/jellyfin-transcoding-ffmpeg.md
@@ -110,6 +111,7 @@ nav:
       - 0005 Healthchecks.io deadman: decisions/0005-healthchecks-deadman.md
       - 0006 Database-per-app: decisions/0006-database-per-app.md
       - 0007 Uptime Kuma out-of-cluster monitor: decisions/0007-uptime-kuma-external-monitor.md
+      - 0008 Tier the NAS storage: decisions/0008-storage-tiering.md
   - Cheatsheet:
       - cheatsheet/index.md
       - kubectl: cheatsheet/kubectl.md
