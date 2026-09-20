@@ -36,6 +36,76 @@ Configuration:
 
 After this ADR was implemented, I ran a planned 11-minute Alertmanager-down window to confirm the HC.io email arrived. It did, within a minute of the grace period elapsing. The pipeline now tests itself any time I do planned maintenance on Alertmanager.
 
+## Correction and update, 2026-09-20
+
+**This ADR was accurate about the design and wrong about the deployment, and
+the gap was invisible for five months.**
+
+On [2026-09-19](../incidents/2026-09-19-nfsv4-callback-deadlock.md) the
+alerting pipeline was dead for about eleven hours and no page arrived. The
+cause was not that the deadman failed. It was configured so loosely that
+eleven hours was well inside normal:
+
+| | Documented above | Actually deployed |
+|---|---|---|
+| Ping cadence | every minute | every 2 minutes |
+| **Time before it alerts** | **10 minutes** | **48 hours** |
+| Notification channel | email | email only, to a secondary inbox |
+
+The pings really were arriving every couple of minutes, and the check really
+did go red. The **alerting** threshold was 48 hours, so an eleven-hour total
+alerting outage never came close to triggering it.
+
+This is the same failure this lab keeps meeting in new costumes. The Wazuh
+SIEM was `active` for four months while indexing nothing. A drive-error guard
+was vacuous because `grep -c ... || echo 0` yields `"0\n0"`. Here, a
+two-minute heartbeat that cannot alert for two days looks like tight
+monitoring on every dashboard and is worth nothing for any outage shorter
+than a weekend. **Check cadence is not detection time.**
+
+### An unresolved contradiction, left visible on purpose
+
+The Validation section above records a planned 11-minute Alertmanager-down
+window that produced an email "within a minute of the grace period elapsing".
+That is **not compatible** with a 48-hour threshold. Either the threshold was
+10 minutes when that test ran and was widened later, or the validation did
+not demonstrate what it recorded.
+
+Which one it was is not established, and it is left here rather than quietly
+tidied away, because either answer carries a lesson worth more than the
+tidying. If it drifted: **a validation is a measurement of one moment, not a
+property of the system**, and nothing re-checked it for five months. If it
+never worked: a green test result was recorded without confirming what
+actually caused the email.
+
+### What it is now
+
+Corrected by the owner on 2026-09-20:
+
+- Heartbeat still checked every 2 minutes.
+- **Alert evaluation every 30 minutes, alerting after two consecutive bad
+  checks.** Worst-case detection is therefore about an hour, rather than 48.
+- **Notifications now go to Discord as well as email.**
+
+The Discord addition matters as much as the timing. The email was going to a
+secondary inbox the owner does not read, so even a correctly-timed alert would
+have been delivered and not seen. A notification nobody reads is the same
+outcome as a notification that never fires, and it fails the same way:
+silently, and only during an incident.
+
+An hour is a deliberate trade against flapping, not an attempt to reach the
+10 minutes this ADR originally claimed. It is the right shape: layer 3 exists
+to catch "the whole pipeline is gone", which is not a condition that resolves
+itself in twenty minutes.
+
+### Follow-up
+
+Layer 3 is still the only leg outside the house, and it has still never been
+proven to page under the new configuration. Test it deliberately: stop
+Alertmanager for a bit over an hour and confirm the **Discord** message
+arrives. Until someone does that, treat this ADR's coverage as designed
+rather than demonstrated, which is exactly the trap it just fell into.
+
 ## Related
 
 - [2026-04-13 alerting blackout](../incidents/2026-04-13-alerting-blackout-cascade.md) is the originating event.
