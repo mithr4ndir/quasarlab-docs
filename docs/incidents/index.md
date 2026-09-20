@@ -13,6 +13,7 @@ Format for every incident:
 
 ## Index, newest first
 
+- [2026-09-20 The NAS rebooted every 161 seconds for 15 hours, and it was a watchdog I had already ruled out](2026-09-20-ugreen-it8613-watchdog.md)
 - [2026-09-19 NFSv4 callback deadlock, 11 hours blind, and the outage I caused fixing it](2026-09-19-nfsv4-callback-deadlock.md)
 - [2026-09-12 1Password quota burn, two reads for every SSH session](2026-09-12-op-quota-shell-profile.md)
 - [2026-08-24 Jellyfin transcode cache filled root, plus the pipeline shipping unmerged code](2026-08-24-jellyfin-transcode-disk-exhaustion.md)

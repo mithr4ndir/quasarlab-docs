@@ -77,6 +77,7 @@ nav:
       - Visuals: architecture/visuals.md
   - Incidents:
       - incidents/index.md
+      - 2026-09-20 UGREEN IT8613 watchdog reboot loop: incidents/2026-09-20-ugreen-it8613-watchdog.md
       - 2026-09-19 NFSv4 callback deadlock: incidents/2026-09-19-nfsv4-callback-deadlock.md
       - 2026-09-12 1Password quota, two reads per SSH session: incidents/2026-09-12-op-quota-shell-profile.md
       - 2026-08-24 Jellyfin transcode disk exhaustion: incidents/2026-08-24-jellyfin-transcode-disk-exhaustion.md
