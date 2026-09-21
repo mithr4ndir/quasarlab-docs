@@ -1,0 +1,2983 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Architecture, runbooks, incidents, and command references for my homelab.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.herro.me/incidents/2026-09-19-nfsv4-callback-deadlock/">
+      
+      
+        <link rel="prev" href="../2026-09-20-ugreen-it8613-watchdog/">
+      
+      
+        <link rel="next" href="../2026-09-12-op-quota-shell-profile/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.45">
+    
+    
+      
+        <title>2026-09-19 NFSv4 callback deadlock - Quasarlab Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0253249f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#2026-09-19-nfsv4-callback-deadlock-11-hours-blind-and-the-outage-i-caused-fixing-it" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Quasarlab Docs" class="md-header__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Quasarlab Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-09-19 NFSv4 callback deadlock
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+    
+  
+  Incidents
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../runbooks/" class="md-tabs__link">
+          
+  
+    
+  
+  Runbooks
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ai-case-studies/" class="md-tabs__link">
+          
+  
+    
+  
+  AI Case Studies
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../decisions/" class="md-tabs__link">
+          
+  
+    
+  
+  Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cheatsheet/" class="md-tabs__link">
+          
+  
+    
+  
+  Cheatsheet
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Quasarlab Docs" class="md-nav__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Quasarlab Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/network/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/visuals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visuals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Incidents
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Incidents
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-09-20-ugreen-it8613-watchdog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-20 UGREEN IT8613 watchdog reboot loop
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    2026-09-19 NFSv4 callback deadlock
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-19 NFSv4 callback deadlock
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#symptom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Symptom
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      Impact
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timeline
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-wrong-diagnoses-before-the-right-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three wrong diagnoses before the right one
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three wrong diagnoses before the right one">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#wrong-restarting-nfs-will-clear-the-stuck-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wrong: "restarting NFS will clear the stuck session"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-nfsd4_destroy_session-is-waiting-on-a-callback-that-will-not-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wrong: "nfsd4_destroy_session is waiting on a callback that will not answer"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-three-separate-theories-for-the-control-plane-outage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wrong: three separate theories for the control-plane outage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#root-cause" class="md-nav__link">
+    <span class="md-ellipsis">
+      Root cause
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-fix-rebooting-a-nas-with-zero-vm-downtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      The fix: rebooting a NAS with zero VM downtime
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-second-outage-self-inflicted" class="md-nav__link">
+    <span class="md-ellipsis">
+      The second outage, self-inflicted
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#five-whys" class="md-nav__link">
+    <span class="md-ellipsis">
+      Five whys
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Five whys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-was-the-lab-blind-for-eleven-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why was the lab blind for eleven hours?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-did-i-take-down-the-control-plane" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why did I take down the control plane?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#about-the-drive-failures-trigger-unknown" class="md-nav__link">
+    <span class="md-ellipsis">
+      About the drive failures: trigger unknown
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="About the drive failures: trigger unknown">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-evidence-does-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      What the evidence does support
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-sustained-writes-does-not-hold" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why "sustained writes" does not hold
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      What this changes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-this-got-into-five-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      How this got into five documents
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-i-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      What I learned
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      What changed
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-09-12-op-quota-shell-profile/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-12 1Password quota, two reads per SSH session
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-08-24-jellyfin-transcode-disk-exhaustion/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-08-24 Jellyfin transcode disk exhaustion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-27-jellyfin-gpu-d3cold-passthrough/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-27 Jellyfin GPU D3cold passthrough
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-03-grafana-metallb-pg_hba/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-03 Grafana / MetalLB / pg_hba
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-op-ratelimit-recurrence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-02 1Password rate-limit recurrence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-19-bitnami-images-removed/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-19 Bitnami images removed
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-18-1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 1Password daily rate-limit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-18-etcd-bloat-rca/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 etcd bloat RCA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-13-alerting-blackout-cascade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-13 Alerting blackout cascade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-07-grafana-pgloader-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-07 Grafana pgloader migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../runbooks/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Runbooks
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Runbooks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/pg-hba-rejecting-k8s-pods/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres rejecting K8s pods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/metallb-no-arp-response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MetalLB IP not answering ARP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/grafana-crashloop/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Grafana CrashLoopBackOff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/etcd-defrag/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    etcd defrag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/nas-reboot-evacuate-vm-disks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NAS reboot with zero VM downtime
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/nas-storage-tiering-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tiered NAS storage migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/bitnami-image-404/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bitnami image 404
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-db-corruption/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin DB corruption
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-transcoding-ffmpeg/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcoding / ffmpeg
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-transcode-cache-disk-full/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcode cache disk full
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/gpu-passthrough-d3cold-recovery/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GPU passthrough D3cold recovery
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password rate-limit hit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../ai-case-studies/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    AI Case Studies
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            AI Case Studies
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-case-studies/2026-09-20-pushing-back-on-the-ai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-20 Pushing back on the AI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../decisions/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Decisions
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Decisions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0001-metallb-l2/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0001 MetalLB L2 not BGP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0002-external-postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0002 External Postgres VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0003-argocd-not-flux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0003 ArgoCD not Flux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0004-bake-monitoring-images/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0004 Bake monitoring images
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0005-healthchecks-deadman/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0005 Healthchecks.io deadman
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0006-database-per-app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0006 Database-per-app
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0007-uptime-kuma-external-monitor/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0007 Uptime Kuma out-of-cluster monitor
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0008-storage-tiering/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0008 Tier the NAS storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cheatsheet/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Cheatsheet
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Cheatsheet
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/kubectl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    kubectl
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/helm-argocd/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helm and ArgoCD
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/bash-and-linux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bash and Linux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/prometheus-amtool/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus and amtool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/onepassword-eso/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password and ExternalSecrets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/ansible/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/terraform/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Terraform
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#symptom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Symptom
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      Impact
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timeline
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#three-wrong-diagnoses-before-the-right-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      Three wrong diagnoses before the right one
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three wrong diagnoses before the right one">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#wrong-restarting-nfs-will-clear-the-stuck-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wrong: "restarting NFS will clear the stuck session"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-nfsd4_destroy_session-is-waiting-on-a-callback-that-will-not-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wrong: "nfsd4_destroy_session is waiting on a callback that will not answer"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wrong-three-separate-theories-for-the-control-plane-outage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wrong: three separate theories for the control-plane outage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#root-cause" class="md-nav__link">
+    <span class="md-ellipsis">
+      Root cause
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-fix-rebooting-a-nas-with-zero-vm-downtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      The fix: rebooting a NAS with zero VM downtime
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-second-outage-self-inflicted" class="md-nav__link">
+    <span class="md-ellipsis">
+      The second outage, self-inflicted
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#five-whys" class="md-nav__link">
+    <span class="md-ellipsis">
+      Five whys
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Five whys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-was-the-lab-blind-for-eleven-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why was the lab blind for eleven hours?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-did-i-take-down-the-control-plane" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why did I take down the control plane?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#about-the-drive-failures-trigger-unknown" class="md-nav__link">
+    <span class="md-ellipsis">
+      About the drive failures: trigger unknown
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="About the drive failures: trigger unknown">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-evidence-does-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      What the evidence does support
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-sustained-writes-does-not-hold" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why "sustained writes" does not hold
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      What this changes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-this-got-into-five-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      How this got into five documents
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-i-learned" class="md-nav__link">
+    <span class="md-ellipsis">
+      What I learned
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      What changed
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/mithr4ndir/quasarlab-docs/edit/main/docs/incidents/2026-09-19-nfsv4-callback-deadlock.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="2026-09-19-nfsv4-callback-deadlock-11-hours-blind-and-the-outage-i-caused-fixing-it">2026-09-19 NFSv4 callback deadlock, 11 hours blind, and the outage I caused fixing it<a class="headerlink" href="#2026-09-19-nfsv4-callback-deadlock-11-hours-blind-and-the-outage-i-caused-fixing-it" title="Permanent link">&para;</a></h1>
+<p>The NAS stopped serving file I/O at about 07:00 UTC and nobody noticed until
+roughly 18:00, because the two services that would have raised the alarm were
+the two services that broke. Fixing it required rebooting a NAS that every
+VM in the lab was booted from. That part went cleanly. The part in the middle,
+where I took the Kubernetes control plane down for sixteen minutes by hand,
+did not.</p>
+<div class="admonition warning">
+<p class="admonition-title">Read this one for the second half</p>
+<p>The NFS deadlock is an upstream kernel behaviour. The control-plane
+outage was mine, caused by choosing a migration target by free space
+instead of by what else was using the drive. That is the more useful
+lesson and it is written up in full below.</p>
+</div>
+<h2 id="symptom">Symptom<a class="headerlink" href="#symptom" title="Permanent link">&para;</a></h2>
+<p>NFS writes from the Kubernetes nodes to TrueNAS stopped completing. From
+outside, the NAS looked perfectly healthy, which is why it survived eleven
+hours of nobody looking:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ping 192.168.1.15</code></td>
+<td>fine</td>
+</tr>
+<tr>
+<td>port 2049</td>
+<td>open</td>
+</tr>
+<tr>
+<td><code>rpcinfo</code></td>
+<td>"ready and waiting"</td>
+</tr>
+<tr>
+<td><code>showmount -e</code></td>
+<td>lists every export</td>
+</tr>
+<tr>
+<td><code>zpool status -x</code></td>
+<td>clean, pool <code>tank</code> ONLINE, 33.6% full, scrub finished</td>
+</tr>
+<tr>
+<td>Actual file I/O</td>
+<td><strong>hangs forever</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Every stateless path kept answering. Only real I/O was dead.</p>
+<p>The clients told the truth that the server would not:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>k8cluster3  load average 76     ~4% CPU
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>k8cluster2  load average 57     ~4% CPU
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>k8cluster1  unaffected
+</span></code></pre></div>
+<p>A load average of 76 at 4% CPU is not work. It is dozens of processes parked
+in uninterruptible sleep, waiting on I/O that will never return.</p>
+<h2 id="impact">Impact<a class="headerlink" href="#impact" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Workload</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prometheus</td>
+<td>panicked at 07:00:35 during rule evaluation, restarted, then wedged entirely. <strong>No alerting for ~11h</strong></td>
+</tr>
+<tr>
+<td>Loki</td>
+<td>not ready, no log ingestion</td>
+</tr>
+<tr>
+<td>jellyseerr, qbittorrent, goatcounter</td>
+<td>not ready</td>
+</tr>
+<tr>
+<td>Sonarr</td>
+<td>SQLite index corruption (repaired losslessly, see below)</td>
+</tr>
+<tr>
+<td><strong>VM disks</strong></td>
+<td><strong>unaffected</strong></td>
+</tr>
+</tbody>
+</table>
+<p>That last row matters architecturally. VM disks live on <strong>iSCSI</strong>, a separate
+service on the same appliance. NFSv4 wedged; iSCSI kept serving. Every VM in
+the lab stayed up throughout, which is the only reason the recovery options
+below existed at all.</p>
+<pre class="mermaid"><code>flowchart TB
+    subgraph NAS["TrueNAS, 192.168.1.15&lt;br/&gt;Separate storage services"]
+        NFS["FAILED, NFSv4 wedged&lt;br/&gt;About 07:00 UTC, 2026-09-19"]
+        ISCSI["UNAFFECTED, iSCSI service&lt;br/&gt;Separate from NFSv4"]
+    end
+
+    subgraph IMPACT["NFS outage consequences"]
+        PROM["Prometheus&lt;br/&gt;Panicked at 07:00:35 UTC, then wedged"]
+        LOKI["Loki not ready&lt;br/&gt;No log ingestion"]
+        APPS["Applications not ready&lt;br/&gt;jellyseerr, qbittorrent, goatcounter"]
+        NODES["Nodes blocked on uninterruptible I/O&lt;br/&gt;k8cluster3 load average 76&lt;br/&gt;k8cluster2 load average 57&lt;br/&gt;Both at about 4% CPU"]
+    end
+
+    subgraph DETECTION["Detection path failed with the monitored system"]
+        SILENCE["No alerting for about 11 hours&lt;br/&gt;The monitoring that would alert also broke"]
+        FOUND["Found by accident&lt;br/&gt;About 11 hours later"]
+    end
+
+    subgraph UNAFFECTED["Outside the observed NFS impact"]
+        VMS["VM disks unaffected&lt;br/&gt;Stored on iSCSI"]
+        K1["k8cluster1 unaffected"]
+    end
+
+    NFS --&gt;|"Monitoring storage failure"| PROM
+    NFS --&gt;|"Log storage failure"| LOKI
+    NFS --&gt;|"NFS-dependent applications"| APPS
+    NFS --&gt;|"File I/O waits, low CPU despite high load"| NODES
+    PROM --&gt;|"Alerting fails with monitoring"| SILENCE
+    SILENCE --&gt;|"Accidental discovery, no alert"| FOUND
+    ISCSI --&gt;|"Separate service kept VM storage working"| VMS
+    NFS -.-&gt;|"Observed exception, no impact"| K1
+
+    classDef healthy fill:#f0fdf4,stroke:#166534,color:#14532d;
+    classDef degraded fill:#fff7ed,stroke:#9a3412,color:#7c2d12;
+    classDef failed fill:#fef2f2,stroke:#991b1b,color:#7f1d1d;
+    class NFS,PROM,LOKI,APPS,SILENCE failed;
+    class NODES,FOUND degraded;
+    class ISCSI,VMS,K1 healthy;
+    style NAS fill:none,stroke:#475569,stroke-width:2px
+    style IMPACT fill:none,stroke:#991b1b
+    style DETECTION fill:none,stroke:#991b1b
+    style UNAFFECTED fill:none,stroke:#166534</code></pre>
+<h2 id="timeline">Timeline<a class="headerlink" href="#timeline" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Time (UTC)</th>
+<th>Event</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>~07:00</td>
+<td>NFS writes stop completing</td>
+</tr>
+<tr>
+<td>07:00:35</td>
+<td>Prometheus panics during rule evaluation</td>
+</tr>
+<tr>
+<td>07:01:55</td>
+<td>First blocked <code>nfsd</code> task logged on the NAS</td>
+</tr>
+<tr>
+<td>07:03:44</td>
+<td>First client hung-task trace, <code>loki</code>, through <code>nfs_write_begin</code></td>
+</tr>
+<tr>
+<td>~07:05</td>
+<td>Everything that could have alerted is now down</td>
+</tr>
+<tr>
+<td><strong>07:05 to 18:00</strong></td>
+<td><strong>Silence. Nothing alerts. Nobody knows.</strong></td>
+</tr>
+<tr>
+<td>~18:00</td>
+<td>Found by accident while checking something unrelated</td>
+</tr>
+<tr>
+<td>~18:30</td>
+<td>NFS service restarted on the NAS. <strong>This made it worse</strong></td>
+</tr>
+<tr>
+<td>~20:00</td>
+<td>Root cause identified from <code>rpc_clnt</code> debugfs state</td>
+</tr>
+<tr>
+<td>19:38 to 20:25</td>
+<td>14 VM disks evacuated to node-local NVMe, live</td>
+</tr>
+<tr>
+<td>~19:50</td>
+<td><strong>Self-inflicted: K8s control plane down ~16 minutes</strong></td>
+</tr>
+<tr>
+<td>~20:40</td>
+<td>NAS rebooted. Zero VM downtime</td>
+</tr>
+<tr>
+<td>21:00 to 23:00</td>
+<td>14 VM disks moved back to the NAS, live</td>
+</tr>
+</tbody>
+</table>
+<h2 id="three-wrong-diagnoses-before-the-right-one">Three wrong diagnoses before the right one<a class="headerlink" href="#three-wrong-diagnoses-before-the-right-one" title="Permanent link">&para;</a></h2>
+<h3 id="wrong-restarting-nfs-will-clear-the-stuck-session">Wrong: "restarting NFS will clear the stuck session"<a class="headerlink" href="#wrong-restarting-nfs-will-clear-the-stuck-session" title="Permanent link">&para;</a></h3>
+<p>This was written down as the immediate mitigation on the tracking issue, and
+it was wrong. Restarting the NFS service <strong>converted a partial outage into a
+total one</strong>. Some clients were still limping; afterwards none were.</p>
+<p>The reasoning error was treating the wedge as stale session state that a
+restart would flush. It was not state. It was a task that could never be
+woken, and restarting the service created fresh sessions that queued up
+behind the same unbreakable wait.</p>
+<h3 id="wrong-nfsd4_destroy_session-is-waiting-on-a-callback-that-will-not-answer">Wrong: "<code>nfsd4_destroy_session</code> is waiting on a callback that will not answer"<a class="headerlink" href="#wrong-nfsd4_destroy_session-is-waiting-on-a-callback-that-will-not-answer" title="Permanent link">&para;</a></h3>
+<p>This was the first real diagnosis and it was close enough to be convincing.
+<code>nfsd</code> threads genuinely were blocked in <code>nfsd4_destroy_session</code>, which
+genuinely does wait for in-flight callback RPCs to drain.</p>
+<p>It was still wrong about <em>why</em>, and a Codex review pushed back on it. The
+captured evidence showed the callback had <strong>never been transmitted at all</strong>.
+It was sitting on the RPC delay queue, not in flight and not failing, with
+nothing scheduled to wake it. A callback that is refused or times out drains.
+A callback that was never sent does not.</p>
+<p>That distinction is the whole incident, because it rules out every
+socket-level remedy. You cannot kill a connection that was never used.</p>
+<h3 id="wrong-three-separate-theories-for-the-control-plane-outage">Wrong: three separate theories for the control-plane outage<a class="headerlink" href="#wrong-three-separate-theories-for-the-control-plane-outage" title="Permanent link">&para;</a></h3>
+<p>Before finding the real cause of the self-inflicted outage I proposed, in
+order: that mirroring the root disks was to blame, that it was a network
+fault, and that it was half-open TCP plus dirty page writeback. All three
+were wrong, and I said so before moving on.</p>
+<h2 id="root-cause">Root cause<a class="headerlink" href="#root-cause" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#f8fafc", "primaryTextColor": "#0f172a", "primaryBorderColor": "#475569", "lineColor": "#475569", "actorBkg": "#f8fafc", "actorBorder": "#475569", "actorTextColor": "#0f172a", "signalColor": "#334155", "signalTextColor": "#0f172a", "noteBkgColor": "#fff7ed", "noteBorderColor": "#9a3412", "noteTextColor": "#7c2d12"}, "sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant K as K8s node #40;NFS client#41;
+    participant N as nfsd #40;TrueNAS#41;
+    participant C as callback RPC client #40;TrueNAS#41;
+    participant Q as delayq #40;TrueNAS#41;
+
+    Note over K,N: "1. Client already holds an NFSv4 delegation"
+    N-&gt;&gt;C: "2. Wants delegation back&lt;br/&gt;Queue CB_RECALL_ANY for the client"
+    C-&gt;&gt;Q: "3. Callback task enters RPC delay queue"
+    rect rgb(254,242,242)
+        Note over C,Q: "LOST WAKEUP&lt;br/&gt;Task stays on delayq forever&lt;br/&gt;Callback is never transmitted"
+    end
+
+    K-&gt;&gt;N: "4. Client session teardown arrives"
+    activate N
+    N-&gt;&gt;N: "nfsd4_destroy_session&lt;br/&gt;Wait for in-flight callback RPCs to drain&lt;br/&gt;before freeing the session"
+    Note over N,Q: "5. Callback never drains&lt;br/&gt;nfsd4_destroy_session never returns&lt;br/&gt;Per-client state locks remain held"
+    K-&gt;&gt;N: "6. Further file I/O arrives"
+    Note over K,N: "Other nfsd threads block behind the locks&lt;br/&gt;FILE I/O HANGS, no completion"
+
+    rect rgb(255,247,237)
+        Note over K,Q: "7. STATELESS CHECKS STILL PASS THROUGHOUT&lt;br/&gt;ping responds, port 2049 is open&lt;br/&gt;rpcinfo says ready, showmount lists every export&lt;br/&gt;NAS LOOKS HEALTHY WHILE SERVING NO FILE I/O"
+    end</code></pre>
+<p>An NFSv4 <code>CB_RECALL_ANY</code> callback, queued from the server to a client to
+recall a delegation, was <strong>never transmitted</strong>. It sat on the RPC delay queue
+indefinitely, a lost wakeup.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/sys/kernel/debug/sunrpc/rpc_clnt/*/tasks   &lt;- the callback, parked on delayq
+</span></code></pre></div>
+<p>Then:</p>
+<ol>
+<li>A client session teardown arrived.</li>
+<li><code>nfsd4_destroy_session</code> waits for in-flight callback RPCs to drain before
+   freeing the session, and holds <strong>per-client state locks</strong> while it waits.</li>
+<li>The callback never drains, so the wait never ends.</li>
+<li>Other <code>nfsd</code> threads block behind those locks.</li>
+<li>File I/O across all clients stops. Stateless operations keep answering.</li>
+</ol>
+<p>Each Kubernetes node was holding <strong>two</strong> NFSv4 sessions, consistent with
+clients re-establishing while the old session could not be torn down.</p>
+<p>The hardware was never the problem. TrueNAS 24.10.2.4, kernel 6.6.44, 120
+days uptime, pool healthy and scrubbed.</p>
+<p><strong>Only a reboot could clear it.</strong> Not a service restart, which made it worse.
+Not <code>ss -K</code>, because the socket was never used. Not killing the tasks,
+because they were unkillable by construction.</p>
+<h2 id="the-fix-rebooting-a-nas-with-zero-vm-downtime">The fix: rebooting a NAS with zero VM downtime<a class="headerlink" href="#the-fix-rebooting-a-nas-with-zero-vm-downtime" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TB
+    START["Starting state&lt;br/&gt;14 running VM disks on NAS-backed ZFS over iSCSI&lt;br/&gt;A NAS reboot now would stop every VM"]
+
+    subgraph MOVES["Live evacuation and return&lt;br/&gt;Every disk move is serial, one VM at a time, rate limited to 200 MiB/s"]
+        TARGET{"Step 1, choose node-local NVMe target&lt;br/&gt;Does it share drives with etcd data disks?"}
+        OUT["Step 1, correct destination&lt;br/&gt;Target does not share drives with etcd&lt;br/&gt;qm disk move uses a QEMU drive mirror&lt;br/&gt;Copy each disk live, VM keeps running"]
+        LOCAL["Step 2, evacuation complete&lt;br/&gt;All 14 disks are on node-local NVMe&lt;br/&gt;NAS has no VM disks on it"]
+        REBOOT["Step 3, reboot the NAS&lt;br/&gt;VMs keep running from local NVMe"]
+        BACK["Step 4, return all 14 disks to the NAS&lt;br/&gt;qm disk move, live&lt;br/&gt;One disk at a time, 200 MiB/s"]
+        DONE["Return complete&lt;br/&gt;All 14 VM disks back on NAS-backed storage&lt;br/&gt;Zero VM downtime"]
+        THROTTLE["Reason for the write throttle&lt;br/&gt;Keeps the migration from starving etcd&lt;br/&gt;and wrecking NFS latency"]
+    end
+
+    subgraph TRAP["Wrong destination, hit during step 1"]
+        WRONG["WRONG PATH&lt;br/&gt;Migration copies written onto QLC drives&lt;br/&gt;that also hold etcd data disks"]
+        WAL["etcd WAL fsync degraded&lt;br/&gt;74 ms to 7,627 ms"]
+        DOWN["Kubernetes control plane down&lt;br/&gt;About 16 minutes&lt;br/&gt;VMs still running"]
+    end
+
+    START --&gt;|"Begin live evacuation"| TARGET
+    TARGET --&gt;|"No, correct destination"| OUT
+    TARGET --&gt;|"Yes, wrong destination used"| WRONG
+    WRONG --&gt;|"Shared-drive write contention"| WAL
+    WAL --&gt;|"etcd latency takes down control plane"| DOWN
+    OUT --&gt;|"Repeat serially until all 14 disks are local"| LOCAL
+    LOCAL --&gt;|"No VM disk depends on NAS"| REBOOT
+    REBOOT --&gt;|"After NAS reboot"| BACK
+    BACK --&gt;|"Repeat serially until all 14 disks are back"| DONE
+    THROTTLE -.-&gt;|"Explains the migration rate limit"| BACK
+
+    classDef neutral fill:#f8fafc,stroke:#475569,color:#0f172a;
+    classDef healthy fill:#f0fdf4,stroke:#166534,color:#14532d;
+    classDef degraded fill:#fff7ed,stroke:#9a3412,color:#7c2d12;
+    classDef failed fill:#fef2f2,stroke:#991b1b,color:#7f1d1d;
+    class START,TARGET neutral;
+    class OUT,LOCAL,REBOOT,BACK,DONE healthy;
+    class THROTTLE,WAL degraded;
+    class WRONG,DOWN failed;
+    style MOVES fill:none,stroke:#475569
+    style TRAP fill:none,stroke:#991b1b,stroke-width:2px</code></pre>
+<p>Every VM in the lab boots from this appliance over iSCSI. A naive reboot
+would have stopped all of them.</p>
+<p>Instead, one VM at a time:</p>
+<ol>
+<li><code>qm disk move</code> (a QEMU drive-mirror) copied each running VM's disk from
+   NAS-backed ZFS-over-iSCSI onto node-local NVMe, <strong>while the VM kept
+   running</strong>.</li>
+<li>Once all 14 disks were local, the NAS held no VM disks.</li>
+<li>Reboot the NAS. Every VM kept running, from local NVMe.</li>
+<li>Move all 14 disks back, again live, again one at a time.</li>
+</ol>
+<p>The lane was deliberately serialised and rate-limited to <strong>200 MiB/s</strong>,
+which is roughly 16% of what the 10G storage link can carry. Two reasons,
+both learned the hard way: the pool contains a batch of SSDs that drop off
+the SATA bus (trigger unknown, see below), and concurrent disk moves are
+exactly how the control-plane outage below happened.</p>
+<p>Result: <strong>the NAS was rebooted with zero VM downtime.</strong></p>
+<h2 id="the-second-outage-self-inflicted">The second outage, self-inflicted<a class="headerlink" href="#the-second-outage-self-inflicted" title="Permanent link">&para;</a></h2>
+<p>During step 1, I took the Kubernetes control plane down for about sixteen
+minutes.</p>
+<p>I chose migration targets by free space. Two of them, <code>SSD1</code> and <code>ssd_1</code>,
+are QLC drives that <strong>also hold the etcd data disks</strong>. Bulk sequential
+mirror writes landed on the same spindles etcd was trying to fsync its
+write-ahead log to:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>During</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>etcd WAL fsync, 16 writes</td>
+<td><strong>7,627 ms</strong></td>
+<td>74 ms</td>
+</tr>
+</tbody>
+</table>
+<p>etcd cannot tolerate that. Leader leases expired, quorum churned, and the
+API servers went with it.</p>
+<p>Two things made this possible, and neither is "I was careless":</p>
+<ul>
+<li><strong>Nothing marks those drives as latency-critical.</strong> Proxmox shows free
+  space, not "etcd lives here". The information existed only in my head.</li>
+<li><strong>The etcd data disks were created by hand and never brought into
+  Terraform</strong> (terraform-quasarlab#24). Uncodified infrastructure cannot
+  warn you.</li>
+</ul>
+<h2 id="five-whys">Five whys<a class="headerlink" href="#five-whys" title="Permanent link">&para;</a></h2>
+<h3 id="why-was-the-lab-blind-for-eleven-hours">Why was the lab blind for eleven hours?<a class="headerlink" href="#why-was-the-lab-blind-for-eleven-hours" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Why did an 11-hour outage go unnoticed?</strong>
+   Nothing alerted.</li>
+<li><strong>Why did nothing alert?</strong>
+   Prometheus and Loki, the alerting and logging pipeline, were themselves
+   the casualties. Prometheus panicked 35 seconds into the incident.</li>
+<li><strong>Why did the alerting pipeline fail together with the thing it monitors?</strong>
+   It shares a failure domain with it. Prometheus and Loki store data on NFS
+   PVCs backed by the same NAS, Alertmanager runs in the same cluster, and
+   its notification path to Discord (<code>discord-alert-proxy</code>) runs in that
+   cluster too. Every link in the chain was downstream of the failure.</li>
+<li><strong>Why did the off-site deadman not catch it either?</strong>
+   Its alert threshold was 48 hours, not the 10 minutes its ADR documented,
+   and it notified an inbox nobody reads. It was checking every 2 minutes and
+   could not alert for two days.</li>
+<li><strong>Why was there no probe from outside that failure domain?</strong>
+   Uptime Kuma had been provisioned as a VM and <strong>never started</strong>. The gap
+   was known: it sat in this site's own "Active questions (not yet ADR'd)"
+   list, described as something to decide "before the next round of
+   monitoring changes".</li>
+<li><strong>Why was a known monitoring gap tracked as an open question instead of
+   as work?</strong>
+   Because it was framed as a design choice still to be made (VM,
+   in-cluster, or off-site) rather than as a missing safety net. Framing it
+   as an unresolved decision made indefinite deferral feel reasonable.</li>
+</ol>
+<p><strong>Root cause:</strong> the monitoring stack shared a failure domain with everything
+it monitored, and the one compensating control was parked as an open question
+rather than built.</p>
+<div class="admonition success">
+<p class="admonition-title">Answered 2026-09-20: the grace period was 48 hours</p>
+<p><a href="../../decisions/0005-healthchecks-deadman/">ADR 0005</a> put an off-site
+deadman in place: Alertmanager's <code>Watchdog</code> pings Healthchecks.io, which
+alerts when the pings stop. It did not fire, and the reason is worse than
+a broken integration.</p>
+<p>The heartbeat was checked <strong>every 2 minutes</strong>. The <strong>alert</strong> did not fire
+until <strong>48 hours</strong> of silence. So an eleven-hour total alerting outage
+was never close to the threshold. The ADR documents a 10-minute grace
+period; the deployment had 48 hours, and nothing compared the two for
+five months.</p>
+<p><strong>Check cadence is not detection time.</strong> A two-minute heartbeat that
+cannot alert for two days looks like tight monitoring on every dashboard
+and is worth nothing for any outage shorter than a weekend. That is the
+third instance of this exact pattern in this write-up alone.</p>
+<p>It also went to email only, in a secondary inbox that does not get read.
+A correctly-timed alert would still have been delivered and not seen.</p>
+<p>Corrected 2026-09-20: alert evaluation every 30 minutes, firing after two
+consecutive bad checks (about an hour worst case), to <strong>Discord and</strong>
+email. See ADR 0005 for the full correction, including a contradiction in
+its own validation record that is still unresolved.</p>
+</div>
+<h3 id="why-did-i-take-down-the-control-plane">Why did I take down the control plane?<a class="headerlink" href="#why-did-i-take-down-the-control-plane" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Why did the Kubernetes control plane go down for 16 minutes?</strong>
+   etcd WAL fsync latency hit 7,627 ms, so leases expired and quorum churned.</li>
+<li><strong>Why did fsync latency explode?</strong>
+   Bulk sequential mirror writes were landing on the same QLC SSDs that hold
+   the etcd data disks.</li>
+<li><strong>Why were the migration copies put there?</strong>
+   I selected the target by available free space, which was the only
+   property I looked at.</li>
+<li><strong>Why was free space the only property considered?</strong>
+   Nothing in Proxmox distinguishes a drive that hosts latency-critical
+   workloads from any other. The constraint existed only as operator
+   knowledge.</li>
+<li><strong>Why did that knowledge not exist anywhere durable?</strong>
+   The etcd data disks were created by hand and never codified in Terraform,
+   so there was no artifact in which the constraint could have been written
+   down, reviewed, or enforced.</li>
+</ol>
+<p><strong>Root cause:</strong> an undocumented, uncodified storage-placement constraint. The
+fix is not "be more careful", it is to codify the disks and make the
+constraint visible at the point of decision.</p>
+<h2 id="about-the-drive-failures-trigger-unknown">About the drive failures: trigger unknown<a class="headerlink" href="#about-the-drive-failures-trigger-unknown" title="Permanent link">&para;</a></h2>
+<p>Several pages on this site, including earlier versions of this one, said the
+bad-batch Inland SSDs drop off the SATA bus <strong>under sustained writes</strong>. That
+causal claim is <strong>not supported by the evidence</strong> and is retracted here.</p>
+<h3 id="what-the-evidence-does-support">What the evidence does support<a class="headerlink" href="#what-the-evidence-does-support" title="Permanent link">&para;</a></h3>
+<p>The failure is a controller or firmware hang, not media wear. The drive stops
+answering, the link cannot be re-established after about 60 seconds of
+retries, and it stays gone until a power cycle or reseat. No reallocations,
+no bad sectors.</p>
+<p>The correlation is with <strong>firmware</strong>, and it is strong:</p>
+<table>
+<thead>
+<tr>
+<th>Firmware</th>
+<th>Drives</th>
+<th>Failures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>VE1R9204</strong></td>
+<td>3</td>
+<td><strong>3 of 3</strong></td>
+</tr>
+<tr>
+<td>VE1R9004</td>
+<td>2</td>
+<td>0 of 2</td>
+</tr>
+</tbody>
+</table>
+<p>Same model, same capacity, same chassis, same controllers, bought together.
+Three WD Blue SA510 in the same box have also never failed.</p>
+<h3 id="why-sustained-writes-does-not-hold">Why "sustained writes" does not hold<a class="headerlink" href="#why-sustained-writes-does-not-hold" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>The timing does not fit.</strong> Failures at 2025-12-31 10:51, 2026-02-10
+   10:00, 2026-09-03 <strong>04:10</strong>, then 09-13 and 09-14. Months apart, one in
+   the middle of the night. No clustering around heavy-write events.</li>
+<li><strong>"It died during a write" is close to what chance predicts.</strong> The logs do
+   show <code>failed command: WRITE FPDMA QUEUED</code>, but on a pool accepting writes
+   that is the most common queued command. A controller that hangs will hang
+   on whatever is in flight. It says a write was <em>present</em>, not <em>causal</em>.</li>
+<li><strong>The experiment already ran, accidentally.</strong> The move-back on the night
+   of 2026-09-19 pushed roughly <strong>660 GB of sustained writes at up to
+   200 MiB/s over about two hours</strong>, after the reboot, which is the heaviest
+   sustained write load this pool has seen in months. <strong>Zero bus errors.</strong>
+   If sustained writes were the trigger, that should have fired.</li>
+</ol>
+<h3 id="what-this-changes">What this changes<a class="headerlink" href="#what-this-changes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The 200 MiB/s migration throttle was not protecting the drives.</strong> It is
+  still worth keeping, because it stops a migration starving etcd and
+  wrecking NFS latency for everything else, but it was justified with a
+  mechanism that cannot be evidenced.</li>
+<li><strong>Waiting for a quiet pool is not a mitigation.</strong> If load is not the
+  trigger, a resilver during quiet hours is no safer than one during busy
+  hours. The mitigation is redundancy placement and watching <code>dmesg</code>.</li>
+<li><strong>The RMA case gets stronger, not weaker.</strong> A firmware-correlated
+  controller hang with a clean control group is a better warranty argument
+  than a load-dependent one.</li>
+</ul>
+<h3 id="how-this-got-into-five-documents">How this got into five documents<a class="headerlink" href="#how-this-got-into-five-documents" title="Permanent link">&para;</a></h3>
+<p>I wrote it once, confidently, from a plausible reading of "the drive accepts
+a write, stops responding" in the RMA pack, and then propagated it into an
+ADR, two runbooks, an architecture page and a GitHub issue. A documentation
+review flagged the phrase as an unverifiable causal claim and <strong>I did not
+follow it up</strong>. It took the owner asking "can you really correlate a lot of
+writes with the disks going offline?" to make me check.</p>
+<p>A plausible mechanism, repeated in enough places, starts to look like a
+finding. That is the same failure as a green test that never ran.</p>
+<h2 id="what-i-learned">What I learned<a class="headerlink" href="#what-i-learned" title="Permanent link">&para;</a></h2>
+<p><strong>Liveness proves nothing.</strong> Every stateless NFS check passed for eleven
+hours while the service did no work. This is the same lesson the Wazuh SIEM
+taught in a different costume: it was <code>active</code> throughout four months of
+indexing nothing. Check that work is <em>happening</em>, not that a process is
+running. Uptime Kuma's NFS monitor does a real read of a sentinel file every
+60 seconds for exactly this reason.</p>
+<div class="admonition note">
+<p class="admonition-title">But do not overclaim what the new probe buys</p>
+<p>The NFS probe reads with <strong>NFSv3 from a fresh fourth client</strong>. This
+deadlock was <strong>NFSv4.1 session state</strong>, and k8cluster1 was unaffected
+throughout, so a new v3 client may well have stayed green that day. What
+would have caught this incident from vm117 are the <strong>Prometheus and Loki
+readiness monitors</strong>, not the NFS probe. The probe catches the NAS or its
+NFS service failing for everyone. Catching one client's stuck mount needs
+a probe on that client, which is an open follow-up.</p>
+</div>
+<p><strong>Monitoring must not share a failure domain with what it monitors.</strong> This is
+now written down properly as <a href="../../decisions/0007-uptime-kuma-external-monitor/">ADR 0007</a>.</p>
+<p><strong>A known gap parked as an "open question" is a decision to accept the risk.</strong>
+It just doesn't feel like one. The Uptime Kuma entry sat in the active
+questions list, correctly identified, and that is where it stayed until an
+11-hour outage promoted it.</p>
+<p><strong>Uncodified infrastructure cannot warn you.</strong> The etcd disks were the only
+thing standing between a routine disk move and a control-plane outage, and
+they existed nowhere except in Proxmox and in my memory.</p>
+<p><strong>Evidence beats plausibility.</strong> The <code>nfsd4_destroy_session</code> theory was
+coherent, matched the stack traces, and was wrong in the one detail that
+determined whether any fix short of a reboot could work. The debugfs task
+state settled it. Read the actual state before committing to a remedy.</p>
+<p><strong>Say when you made it worse.</strong> Restarting NFS turned a partial outage into
+a total one. Recording that is what stops the next person reaching for it.</p>
+<h2 id="what-changed">What changed<a class="headerlink" href="#what-changed" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uptime Kuma deployed on vm117 as the out-of-cluster monitor, alerting Discord directly</td>
+<td>ansible-quasarlab#178, <a href="../../decisions/0007-uptime-kuma-external-monitor/">ADR 0007</a></td>
+</tr>
+<tr>
+<td>NFS probe doing a real sentinel read every 60s</td>
+<td><code>roles/uptime_kuma</code>, push monitor</td>
+</tr>
+<tr>
+<td>Switch the K8s NFS StorageClass to NFSv3 (stateless: no delegations, no callbacks, no sessions, so this deadlock class disappears)</td>
+<td>k8s-argocd#213, pending</td>
+</tr>
+<tr>
+<td>Move stateful databases to iSCSI-backed RWO</td>
+<td>k8s-argocd#213, pending</td>
+</tr>
+<tr>
+<td>Move etcd disks off QLC and into Terraform</td>
+<td>terraform-quasarlab#24, pending</td>
+</tr>
+<tr>
+<td>Sonarr index corruption repaired with <code>REINDEX</code>, losslessly</td>
+<td>runbook exists</td>
+</tr>
+</tbody>
+</table>
+<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../decisions/0007-uptime-kuma-external-monitor/">ADR 0007: Uptime Kuma as the out-of-cluster monitor</a> is the direct consequence of this incident.</li>
+<li><a href="../../decisions/0005-healthchecks-deadman/">ADR 0005: External deadman switch via Healthchecks.io</a> is layer 3, and its effectiveness here is the open question above.</li>
+<li><a href="../2026-04-13-alerting-blackout-cascade/">2026-04-13 alerting blackout cascade</a> is the same shape: the alerting chain failing silently with the thing it watches.</li>
+<li><a href="../../runbooks/nas-reboot-evacuate-vm-disks/">Runbook: NAS reboot with zero VM downtime</a> is the procedure from the fix section.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/mithr4ndir" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>

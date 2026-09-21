@@ -1,0 +1,2514 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Architecture, runbooks, incidents, and command references for my homelab.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.herro.me/incidents/2026-09-12-op-quota-shell-profile/">
+      
+      
+        <link rel="prev" href="../2026-09-19-nfsv4-callback-deadlock/">
+      
+      
+        <link rel="next" href="../2026-08-24-jellyfin-transcode-disk-exhaustion/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.45">
+    
+    
+      
+        <title>2026-09-12 1Password quota, two reads per SSH session - Quasarlab Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0253249f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#2026-09-12-1password-quota-burn-two-reads-for-every-ssh-session" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Quasarlab Docs" class="md-header__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Quasarlab Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-09-12 1Password quota, two reads per SSH session
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+    
+  
+  Incidents
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../runbooks/" class="md-tabs__link">
+          
+  
+    
+  
+  Runbooks
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ai-case-studies/" class="md-tabs__link">
+          
+  
+    
+  
+  AI Case Studies
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../decisions/" class="md-tabs__link">
+          
+  
+    
+  
+  Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cheatsheet/" class="md-tabs__link">
+          
+  
+    
+  
+  Cheatsheet
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Quasarlab Docs" class="md-nav__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Quasarlab Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/network/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/visuals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visuals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Incidents
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Incidents
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-09-20-ugreen-it8613-watchdog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-20 UGREEN IT8613 watchdog reboot loop
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-09-19-nfsv4-callback-deadlock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-19 NFSv4 callback deadlock
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    2026-09-12 1Password quota, two reads per SSH session
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-12 1Password quota, two reads per SSH session
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#symptom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Symptom
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#first-hypotheses-and-what-made-me-revise-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      First hypotheses, and what made me revise them
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="First hypotheses, and what made me revise them">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-cache-should-have-made-this-impossible" class="md-nav__link">
+    <span class="md-ellipsis">
+      The cache should have made this impossible
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ruled-out-by-measurement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ruled out by measurement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attribution-then-an-accidental-reproduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Attribution, then an accidental reproduction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#88-reads-zero-op-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      88 reads, zero op processes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-root-cause" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real root cause
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real root cause">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-earlier-investigations-missed-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why earlier investigations missed it
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#blast-radius" class="md-nav__link">
+    <span class="md-ellipsis">
+      Blast radius
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Blast radius">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#found-along-the-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      Found along the way
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fix
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-08-24-jellyfin-transcode-disk-exhaustion/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-08-24 Jellyfin transcode disk exhaustion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-27-jellyfin-gpu-d3cold-passthrough/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-27 Jellyfin GPU D3cold passthrough
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-03-grafana-metallb-pg_hba/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-03 Grafana / MetalLB / pg_hba
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-op-ratelimit-recurrence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-02 1Password rate-limit recurrence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-19-bitnami-images-removed/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-19 Bitnami images removed
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-18-1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 1Password daily rate-limit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-18-etcd-bloat-rca/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 etcd bloat RCA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-13-alerting-blackout-cascade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-13 Alerting blackout cascade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-07-grafana-pgloader-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-07 Grafana pgloader migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../runbooks/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Runbooks
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Runbooks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/pg-hba-rejecting-k8s-pods/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres rejecting K8s pods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/metallb-no-arp-response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MetalLB IP not answering ARP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/grafana-crashloop/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Grafana CrashLoopBackOff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/etcd-defrag/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    etcd defrag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/nas-reboot-evacuate-vm-disks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NAS reboot with zero VM downtime
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/nas-storage-tiering-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tiered NAS storage migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/bitnami-image-404/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bitnami image 404
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-db-corruption/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin DB corruption
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-transcoding-ffmpeg/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcoding / ffmpeg
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-transcode-cache-disk-full/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcode cache disk full
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/gpu-passthrough-d3cold-recovery/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GPU passthrough D3cold recovery
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password rate-limit hit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../ai-case-studies/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    AI Case Studies
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            AI Case Studies
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-case-studies/2026-09-20-pushing-back-on-the-ai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-20 Pushing back on the AI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../decisions/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Decisions
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Decisions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0001-metallb-l2/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0001 MetalLB L2 not BGP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0002-external-postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0002 External Postgres VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0003-argocd-not-flux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0003 ArgoCD not Flux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0004-bake-monitoring-images/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0004 Bake monitoring images
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0005-healthchecks-deadman/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0005 Healthchecks.io deadman
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0006-database-per-app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0006 Database-per-app
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0007-uptime-kuma-external-monitor/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0007 Uptime Kuma out-of-cluster monitor
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0008-storage-tiering/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0008 Tier the NAS storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cheatsheet/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Cheatsheet
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Cheatsheet
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/kubectl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    kubectl
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/helm-argocd/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helm and ArgoCD
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/bash-and-linux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bash and Linux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/prometheus-amtool/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus and amtool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/onepassword-eso/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password and ExternalSecrets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/ansible/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/terraform/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Terraform
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#symptom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Symptom
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#first-hypotheses-and-what-made-me-revise-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      First hypotheses, and what made me revise them
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="First hypotheses, and what made me revise them">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-cache-should-have-made-this-impossible" class="md-nav__link">
+    <span class="md-ellipsis">
+      The cache should have made this impossible
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ruled-out-by-measurement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ruled out by measurement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attribution-then-an-accidental-reproduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Attribution, then an accidental reproduction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#88-reads-zero-op-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      88 reads, zero op processes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-root-cause" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real root cause
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real root cause">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-earlier-investigations-missed-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why earlier investigations missed it
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#blast-radius" class="md-nav__link">
+    <span class="md-ellipsis">
+      Blast radius
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Blast radius">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#found-along-the-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      Found along the way
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fix
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/mithr4ndir/quasarlab-docs/edit/main/docs/incidents/2026-09-12-op-quota-shell-profile.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="2026-09-12-1password-quota-burn-two-reads-for-every-ssh-session">2026-09-12: 1Password quota burn, two reads for every SSH session<a class="headerlink" href="#2026-09-12-1password-quota-burn-two-reads-for-every-ssh-session" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-09-12 (spikes), root cause found and fixed 2026-09-13
+<strong>Severity:</strong> S3. The spikes took the account cap to 60%. My own investigation
+later took it to 92%. Nothing ran dry.</p>
+<p>Every SSH session into command-center1 (the host that runs Ansible, and one of
+its own targets) cost two 1Password reads, because <code>~/.bashrc</code> ran an uncached
+<code>op read</code> for every command, interactive or not. A run of the command center
+playbook opens dozens of SSH sessions, so each run against that host cost 88 to
+324 reads. Tracing Ansible could not see it: the reads ran in shells that <code>sshd</code>
+started, outside Ansible's process tree, even though both were on the same machine.</p>
+<p>This is the third 1Password quota page on this site, after
+<a href="../2026-04-18-1password-rate-limit/">2026-04-18</a> and
+<a href="../2026-05-02-op-ratelimit-recurrence/">2026-05-02</a>. Each found and fixed a real
+consumer. None found this one.</p>
+<h2 id="symptom">Symptom<a class="headerlink" href="#symptom" title="Permanent link">&para;</a></h2>
+<p>The 50% quota alert, at <code>info</code> severity then, was firing again. At 23:00 UTC:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>TYPE       ACTION        LIMIT    USED    REMAINING    RESET
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>account    read_write    1000     599     401          3 hours from now
+</span></code></pre></div>
+<p>The cap is 1000 reads per 24-hour window, shared by every token on the account.
+On this account the window rolls over once a day, at about 02:51 UTC. My target
+is to stay under half, so 599 was a failure, just not an outage.</p>
+<p>The day's spend was not a drip. It was three bursts (first 5-minute collector
+sample showing each jump):</p>
+<table>
+<thead>
+<tr>
+<th>Time (UTC)</th>
+<th>Delta</th>
+<th>Running total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>04:15</td>
+<td>+160</td>
+<td>249</td>
+</tr>
+<tr>
+<td>05:15</td>
+<td>+160</td>
+<td>413</td>
+</tr>
+<tr>
+<td>14:30</td>
+<td>+94</td>
+<td>549</td>
+</tr>
+<tr>
+<td>everything else</td>
+<td>small steps of +2, several per hour</td>
+<td>185</td>
+</tr>
+</tbody>
+</table>
+<p>Three bursts were 414 of 599 reads, about 70% of the day.</p>
+<h2 id="first-hypotheses-and-what-made-me-revise-them">First hypotheses, and what made me revise them<a class="headerlink" href="#first-hypotheses-and-what-made-me-revise-them" title="Permanent link">&para;</a></h2>
+<h3 id="the-cache-should-have-made-this-impossible">The cache should have made this impossible<a class="headerlink" href="#the-cache-should-have-made-this-impossible" title="Permanent link">&para;</a></h3>
+<p>Secrets are read through a file-backed cache with a TTL, the Proxmox inventory
+token moved into ansible-vault in
+<a href="https://github.com/mithr4ndir/ansible-quasarlab/pull/129">ansible-quasarlab#129</a>,
+and the hourly Ansible timers had been measured at a handful of reads per fire.</p>
+<h3 id="ruled-out-by-measurement">Ruled out by measurement<a class="headerlink" href="#ruled-out-by-measurement" title="Permanent link">&para;</a></h3>
+<p>Each of these had caused quota burn before, so I measured each one.</p>
+<ul>
+<li><strong>The hourly timers.</strong> They fired every hour all day and cost about 5 reads an
+  hour, not bursts of 160. The cache held 12 secrets and was working.</li>
+<li><strong>External Secrets Operator.</strong> Only 7 ExternalSecrets exist, its pods had
+  restarted at 03:08 rather than 04:15, and comparing token fingerprints, without
+  printing either token, showed ESO uses a <strong>different</strong> service account. The
+  hourly token-level counter on command-center1 peaked in exactly the burst
+  hours. The burn was on this host's own token.</li>
+<li><strong>Someone running Ansible by hand.</strong> ARA, which records runs from the timer
+  wrappers and from login shells, showed 262 runs in 24 hours, all from the pinned
+  automation checkout.</li>
+</ul>
+<p>So the burn was this host's own token, in bursts, and not the timers, ESO, or any
+recorded run. The collector could say how much quota was left, but not who spent it.</p>
+<h3 id="attribution-then-an-accidental-reproduction">Attribution, then an accidental reproduction<a class="headerlink" href="#attribution-then-an-accidental-reproduction" title="Permanent link">&para;</a></h3>
+<p>Rather than patch the likeliest suspect again, I built an <code>op</code> wrapper that
+records redacted invocation metadata and exports a per-consumer counter
+(<a href="https://github.com/mithr4ndir/ansible-quasarlab/pull/151">ansible-quasarlab#151</a>).
+Review caught that its argument redaction was a denylist that let field
+assignments like <code>notesPlain=</code> through, so it became an allowlist before anything
+was deployed (<a href="https://github.com/mithr4ndir/ansible-quasarlab/pull/153">#153</a>).</p>
+<p>The wrapper is installed by <code>cmd_center.yml</code>. A one-host <code>--check</code> run of that
+playbook, bracketed by the free quota status call, moved the counter from 607 to
+695: <strong>88 reads for a dry run</strong>. Three more identical runs cost about 88 each.</p>
+<h3 id="88-reads-zero-op-processes">88 reads, zero <code>op</code> processes<a class="headerlink" href="#88-reads-zero-op-processes" title="Permanent link">&para;</a></h3>
+<p>I got the next step wrong twice.</p>
+<ul>
+<li><strong>Dynamic inventory</strong>, the cause of an earlier incident. Bracketing
+  <code>ansible-inventory --list</code> on its own cost 0 reads. #129 had fixed it.</li>
+<li><strong>The <code>onepassword_cli</code> role</strong>, which makes an uncached call. The play failed on
+  its first role (a <code>kubectl</code> package held with <code>apt-mark hold</code>) and never reached
+  it. Still 88.</li>
+</ul>
+<p>Then I traced it. An <code>op</code> wrapper added to the controller's own <code>PATH</code> logged zero
+calls during an 88-read run. <code>strace -f -e trace=execve</code> on the whole playbook
+found zero <code>op</code> execs and 44 execs of <code>/usr/bin/ssh</code>. 88 reads, 44 SSH
+sessions: exactly 2 each.</p>
+<h2 id="real-root-cause">Real root cause<a class="headerlink" href="#real-root-cause" title="Permanent link">&para;</a></h2>
+<p>One SSH session, bracketed by the free quota call:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">before</span><span class="o">=</span><span class="k">$(</span>op<span class="w"> </span>service-account<span class="w"> </span>ratelimit<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;/account/{print $4}&#39;</span><span class="k">)</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ssh<span class="w"> </span>command-center1<span class="w"> </span><span class="nb">true</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nv">after</span><span class="o">=</span><span class="k">$(</span>op<span class="w"> </span>service-account<span class="w"> </span>ratelimit<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;/account/{print $4}&#39;</span><span class="k">)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;cost: </span><span class="k">$((</span><span class="nv">after</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nv">before</span><span class="k">))</span><span class="s2"> reads&quot;</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># cost: 2 reads</span>
+</span></code></pre></div>
+<p>The top of <code>~/.bashrc</code> exported the Proxmox API token with an uncached <code>op read</code>,
+and a comment explained that it had been placed there on purpose:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># 1Password / Proxmox token for Ansible (must be before non-interactive guard)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PROXMOX_TOKEN_SECRET</span><span class="k">:-</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">OP_SERVICE_ACCOUNT_TOKEN</span><span class="k">:-</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">   </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span>op<span class="w"> </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nb">export</span><span class="w"> </span><span class="nv">PROXMOX_TOKEN_SECRET</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>op<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="s1">&#39;op://&lt;vault&gt;/&lt;item&gt;/&lt;field&gt;&#39;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span><span class="k">)</span><span class="s2">&quot;</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">fi</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># If not running interactively, don&#39;t do anything</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">case</span><span class="w"> </span><span class="nv">$-</span><span class="w"> </span><span class="k">in</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span>*i*<span class="o">)</span><span class="w"> </span><span class="p">;;</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">      </span>*<span class="o">)</span><span class="w"> </span><span class="k">return</span><span class="p">;;</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="k">esac</span>
+</span></code></pre></div>
+<p>Bash reads <code>~/.bashrc</code> even for a non-interactive command when <code>sshd</code> starts it,
+so this ran for every command Ansible sent over SSH. Measured on its own, a single
+<code>op read</code> of a named reference costs 2 account reads. Ansible multiplexes many
+sessions over one SSH connection, but each session starts a new shell, and each
+shell paid again. A later dry run that got 28 tasks deep instead of 8 cost
+<strong>324 reads</strong>, consistent with 162 sessions at 2 each.</p>
+<p>A root-owned sibling, <code>/etc/profile.d/op-ansible-env.sh</code>, did the same thing for
+login shells, which the plain commands Ansible sends over SSH do not start.
+Neither file was in the Ansible repo.</p>
+<p>One thing this does <strong>not</strong> explain: what caused the bursts at 04:15, 05:15 and
+14:30 on 2026-09-12. They were on this host's token, but no recorded run in those
+hours differs from any other hour. If they were SSH sessions, the fix removed their
+cost. If not, the attribution wrapper should name them next time.</p>
+<h3 id="why-earlier-investigations-missed-it">Why earlier investigations missed it<a class="headerlink" href="#why-earlier-investigations-missed-it" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Tracing Ansible could not see it.</strong> The reads ran in shells that <code>sshd</code>
+  started, not in Ansible's process tree, even though Ansible was connecting to
+  the host it runs on. Every tool I pointed at Ansible truthfully reported that it
+  never called <code>op</code>.</li>
+<li><strong>Nothing owned the files.</strong> No playbook managed <code>~/.bashrc</code> or the profile
+  script, so no code review ever saw them.</li>
+<li><strong>The vault migration never knew about them.</strong> #129 replaced the wrapper
+  scripts' <code>op read</code> path with a vault helper and closed the inventory bypass. A
+  second copy of the same export lived in shell startup files nobody had listed.
+  The migration landed on 2026-05-02; the shell copy kept running for four more
+  months.</li>
+</ul>
+<p>The earlier pages found real consumers (the ESO retry loop, uncached reads in
+playbooks, the inventory plugin) and fixed them. I never measured how much of their
+burn this read caused. One unpublished recurrence was blamed on hand-run
+<code>ansible-playbook</code>, which was likely the right trigger and the wrong mechanism:
+those runs were expensive because every SSH session they opened paid this toll.</p>
+<h2 id="blast-radius">Blast radius<a class="headerlink" href="#blast-radius" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Every SSH session into command-center1</strong> cost 2 reads, whether it came from
+  Ansible, a script, or a person.</li>
+<li><strong>Every <code>cmd_center.yml</code> run</strong> cost 88 to 324 reads depending on how far it got.
+  Other playbooks that SSH into the host paid in proportion: the hourly drip of
+  about 5 reads went to zero after the fix, while the timers kept running.</li>
+<li><strong>My own investigation</strong> spent roughly 1,000 reads across two daily windows and
+  took the counter to 917. Most of that was full playbook dry runs. The <code>ssh true</code>
+  test that settled it cost 2.</li>
+<li><strong>The last apply tripped the kill switch by accident.</strong> The wrappers scan
+  playbook output for "Too many requests", and the <code>--diff</code> of the newly installed
+  kill switch script contained that phrase in a comment. That paused the Ansible
+  timers until the quota check cleared it, with 1Password refusing nothing
+  (<a href="https://github.com/mithr4ndir/ansible-quasarlab/issues/160">#160</a>).</li>
+</ul>
+<h3 id="found-along-the-way">Found along the way<a class="headerlink" href="#found-along-the-way" title="Permanent link">&para;</a></h3>
+<p>Fixing this meant getting <code>cmd_center.yml</code> to finish a full run, which it had not
+done since 2026-03-16 (every completion since then was limited to a single tag).
+That exposed three unrelated problems, each now fixed:</p>
+<ul>
+<li><strong>HashiCorp rotated its apt signing key around 2026-09-10.</strong> From 2026-09-09
+  23:21 UTC, <code>apt-get update</code> failed on command-center1, so <code>vm_baseline.yml</code>,
+  <code>monitoring.yml</code> and <code>wazuh.yml</code> failed on that host on every timer run for
+  almost four days. The key is now pinned by fingerprint, so the next rotation
+  fails loudly (<a href="https://github.com/mithr4ndir/ansible-quasarlab/pull/157">#157</a>).</li>
+<li><strong>A retired Elastic apt repository was still configured on 9 hosts.</strong> Its
+  removal had been added to the two roles for the three hosts where it was noticed
+  (wazuh, pve and pve2), and the other 9 never run either role. It now lives in a role every host runs, and
+  was removed from all 9 on 2026-09-13
+  (<a href="https://github.com/mithr4ndir/ansible-quasarlab/pull/157">#157</a>).</li>
+<li><strong>Three user-level systemd tasks were broken.</strong> The play runs with
+  <code>become: yes</code>, so facts are gathered as root and <code>ansible_user_uid</code> is <code>0</code>. The
+  tasks built <code>/run/user/0/bus</code> from it, and <code>| default(1000)</code> never fired because
+  the fact was defined, just wrong. The play aborted there, unnoticed because
+  nobody ran it, and the spec-workflow dashboard had only ever been started by hand
+  (<a href="https://github.com/mithr4ndir/ansible-quasarlab/pull/158">#158</a>).</li>
+</ul>
+<h2 id="fix">Fix<a class="headerlink" href="#fix" title="Permanent link">&para;</a></h2>
+<p><a href="https://github.com/mithr4ndir/ansible-quasarlab/pull/155">ansible-quasarlab#155</a>
+brings both shell startup files under Ansible management:</p>
+<ul>
+<li>Neither calls <code>op</code> any more. A task fails the play if an <code>op read</code> reappears in
+  <code>~/.bashrc</code>.</li>
+<li>The token is decrypted from ansible-vault through the same helper the timer
+  wrappers use, and only in interactive shells. The shells Ansible opens over SSH
+  never needed it.</li>
+<li><code>scripts/run-cmd-center.sh</code> gives manual runs of this playbook the same guard
+  rails as the timers.</li>
+</ul>
+<h1 id="151-also-locked-the-secret-cache-against-concurrent-misses-and-raised-its-ttl-to">151 also locked the secret cache against concurrent misses and raised its TTL to<a class="headerlink" href="#151-also-locked-the-secret-cache-against-concurrent-misses-and-raised-its-ttl-to" title="Permanent link">&para;</a></h1>
+<p>48 hours.</p>
+<p>Same commands, before and after:</p>
+<table>
+<thead>
+<tr>
+<th>Measurement</th>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ssh command-center1 true</code></td>
+<td>2 reads</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td><code>cmd_center.yml --check</code></td>
+<td>324 reads</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>Full <code>cmd_center.yml</code> run</td>
+<td>none completed since 2026-03-16</td>
+<td><strong>0 reads</strong>, 123 ok, 0 failed</td>
+</tr>
+</tbody>
+</table>
+<p>Detection, so the next burst is a query rather than an investigation:</p>
+<ul>
+<li><strong>Attribution.</strong> The <code>op</code> wrapper exports
+  <code>onepassword_op_invocations_total{consumer,caller,unit,subcommand}</code>, confirmed
+  scraped by Prometheus. It went live after the fix, so it did not find this one;
+  it exists for the next.</li>
+<li><strong>Burn rate.</strong> A new alert fires on reads per hour rather than on remaining
+  quota (<a href="https://github.com/mithr4ndir/k8s-argocd/pull/200">k8s-argocd#200</a>, with
+  a rollover edge case fixed in
+  <a href="https://github.com/mithr4ndir/k8s-argocd/pull/202">#202</a>). Replayed against the
+  day's data, it fires at 04:16, the first sample after the 04:15 burst, at 202
+  reads in the trailing hour, and peaks at 324 once the 05:15 burst lands. The 50%
+  threshold was not crossed until 14:30.</li>
+<li><strong>The 50% alert is now a warning, not info</strong>, so crossing my own target is no
+  longer quiet.</li>
+</ul>
+<h3 id="what-i-did-not-change-and-why">What I did not change, and why<a class="headerlink" href="#what-i-did-not-change-and-why" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>No full apply while the cap was nearly spent.</strong> With about 140 reads left and a
+  full run measured at 324, I applied only the shell startup tasks
+  (<code>--tags shell_env</code>, which cost 60 while fixing itself and left 83), confirmed
+  SSH was free, and only then ran the rest.</li>
+<li><strong>Kept credential values out of telemetry.</strong> I rejected capturing full command
+  lines, which would have copied secret arguments into logs. The wrapper keeps
+  useful metadata and redacts arguments through an allowlist.</li>
+<li><strong>Kept scheduling separate.</strong> A reconciliation schedule for configuration that
+  touches the cluster deserves its own decision, even though the lack of one is
+  how this host drifted.</li>
+</ul>
+<h2 id="follow-ups">Follow-ups<a class="headerlink" href="#follow-ups" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Stop the kill switch matching text in <code>--diff</code> and task output, and confirm the
+  timers resume once it clears
+  (<a href="https://github.com/mithr4ndir/ansible-quasarlab/issues/160">#160</a>).</li>
+<li>Identify what caused the three bursts, using the attribution metric the next
+  time one happens.</li>
+<li>Decide on a reconciliation schedule for <code>cmd_center.yml</code>.</li>
+<li><code>cmd_center.yml --check</code> still fails for reasons unrelated to this incident,
+  which makes dry runs less trustworthy:
+  <a href="https://github.com/mithr4ndir/ansible-quasarlab/issues/156">#156</a> and
+  <a href="https://github.com/mithr4ndir/ansible-quasarlab/issues/159">#159</a>.</li>
+</ul>
+<h2 id="what-this-incident-is-a-good-example-of">What this incident is a good example of<a class="headerlink" href="#what-this-incident-is-a-good-example-of" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Measure one operation, not a whole run.</strong> Bracketing a single
+  <code>ssh command-center1 true</code> with the free quota call turned months of inference
+  into arithmetic: 2 reads per session, 44 sessions, 88 reads.</li>
+<li><strong>A clean trace only covers the tree you traced.</strong> <code>strace -f</code> and a wrapper on
+  the controller's <code>PATH</code> were both correct. The reads ran in shells that <code>sshd</code>
+  started on the same machine, outside the process tree I was watching.</li>
+<li><strong>A replacement is finished when every copy of the old thing is gone.</strong> The vault
+  migration shipped, but a second copy of the old export lived in files no
+  playbook owned, so nothing was ever going to find or remove it. The
+  decommissioning checklist I use for VMs applies to configuration too.</li>
+<li><strong>A fix in the wrong place is not a fleet fix.</strong> The Elastic repo removal was
+  merged into roles most hosts never run, and this playbook had not completed a
+  full run in six months. Both looked finished from the pull request page.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/mithr4ndir" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
