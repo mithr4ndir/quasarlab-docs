@@ -103,6 +103,9 @@ nav:
       - Jellyfin transcode cache disk full: runbooks/jellyfin-transcode-cache-disk-full.md
       - GPU passthrough D3cold recovery: runbooks/gpu-passthrough-d3cold-recovery.md
       - 1Password rate-limit hit: runbooks/1password-rate-limit.md
+  - AI Case Studies:
+      - ai-case-studies/index.md
+      - 2026-09-20 Pushing back on the AI: ai-case-studies/2026-09-20-pushing-back-on-the-ai.md
   - Decisions:
       - decisions/index.md
       - 0001 MetalLB L2 not BGP: decisions/0001-metallb-l2.md
