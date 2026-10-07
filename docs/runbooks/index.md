@@ -19,6 +19,7 @@ Short, fix-it-now docs derived from real incidents in the lab. Each runbook foll
 
 - [Reboot the NAS with zero VM downtime](nas-reboot-evacuate-vm-disks.md)
 - [Migrate to tiered NAS storage](nas-storage-tiering-migration.md)
+- [NVMe tiering migration (supersedes stages 3 and 4 above)](nvme-tiering-migration.md)
 
 ## Apps
 

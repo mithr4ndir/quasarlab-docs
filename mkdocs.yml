@@ -97,6 +97,7 @@ nav:
       - etcd defrag: runbooks/etcd-defrag.md
       - NAS reboot with zero VM downtime: runbooks/nas-reboot-evacuate-vm-disks.md
       - Tiered NAS storage migration: runbooks/nas-storage-tiering-migration.md
+      - NVMe tiering migration: runbooks/nvme-tiering-migration.md
       - Bitnami image 404: runbooks/bitnami-image-404.md
       - Jellyfin DB corruption: runbooks/jellyfin-db-corruption.md
       - Jellyfin transcoding / ffmpeg: runbooks/jellyfin-transcoding-ffmpeg.md
@@ -116,6 +117,7 @@ nav:
       - 0006 Database-per-app: decisions/0006-database-per-app.md
       - 0007 Uptime Kuma out-of-cluster monitor: decisions/0007-uptime-kuma-external-monitor.md
       - 0008 Tier the NAS storage: decisions/0008-storage-tiering.md
+      - 0009 What the two SN850X should do: decisions/0009-nvme-repurposing.md
   - Cheatsheet:
       - cheatsheet/index.md
       - kubectl: cheatsheet/kubectl.md
