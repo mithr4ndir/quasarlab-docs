@@ -3,6 +3,14 @@
 **Status:** Accepted
 **Date:** 2026-09-20
 
+!!! warning "Amended by ADR 0009 on 2026-10-07. Read that first."
+    Step 1 was executed on 2026-09-20 and its "instant, reversible" framing
+    was wrong: the removal wedged the NAS for 4.5 hours. Step 3's premise is
+    refuted by measurement (the SLOG carries 49 write IOPS at 92us). Step 4
+    is **cancelled**, superseded by the RMA. Step 2 is still the right end
+    state, with three amendments. See
+    [ADR 0009](0009-nvme-repurposing.md#what-in-adr-0008-is-now-stale-or-wrong).
+
 ## Context
 
 The NAS has eight 4 TB SATA SSDs, two 4 TB WD_BLACK SN850X NVMe, and 62 GB of

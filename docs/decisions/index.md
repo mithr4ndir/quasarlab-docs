@@ -17,6 +17,7 @@ Short notes on tradeoffs taken in the lab. Each ADR follows the standard shape:
 - [0006 Database-per-app on the shared Postgres VM](0006-database-per-app.md)
 - [0007 Uptime Kuma as the out-of-cluster monitor](0007-uptime-kuma-external-monitor.md)
 - [0008 Tier the NAS storage, NVMe for VMs and SATA for bulk](0008-storage-tiering.md)
+- [0009 What the two SN850X should actually do](0009-nvme-repurposing.md)
 
 ## Active questions (not yet ADR'd)
 

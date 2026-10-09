@@ -5,6 +5,14 @@ VM disks and Kubernetes PVCs onto an NVMe mirror, leave bulk data on SATA,
 and stop wasting two SN850X on a SLOG that holds 11 MiB and an L2ARC that
 costs more ARC than it returns.
 
+!!! warning "Stages 3 and 4 are superseded. Use the NVMe tiering runbook."
+    Stage 3 (retire the SLOG) rests on a premise that measurement refutes, and
+    stage 4 (rebalance `tank`) is **cancelled** in favour of the RMA. Stage 2
+    is also missing the SLOG coupling, a capacity bound, and the fact that
+    `tank/k8s` cannot move with the zvols. See
+    [NVMe tiering migration](nvme-tiering-migration.md) and
+    [ADR 0009](../decisions/0009-nvme-repurposing.md).
+
 **Four stages, in this order**, cheapest and most reversible first. Each is
 independently useful. Stop after any of them.
 
