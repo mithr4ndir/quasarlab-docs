@@ -1,0 +1,2958 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Architecture, runbooks, incidents, and command references for my homelab.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.herro.me/runbooks/nvme-tiering-migration/">
+      
+      
+        <link rel="prev" href="../nas-storage-tiering-migration/">
+      
+      
+        <link rel="next" href="../bitnami-image-404/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.45">
+    
+    
+      
+        <title>NVMe tiering migration - Quasarlab Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0253249f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#nvme-tiering-migration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Quasarlab Docs" class="md-header__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Quasarlab Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              NVMe tiering migration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../incidents/" class="md-tabs__link">
+          
+  
+    
+  
+  Incidents
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+    
+  
+  Runbooks
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ai-case-studies/" class="md-tabs__link">
+          
+  
+    
+  
+  AI Case Studies
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../decisions/" class="md-tabs__link">
+          
+  
+    
+  
+  Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cheatsheet/" class="md-tabs__link">
+          
+  
+    
+  
+  Cheatsheet
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Quasarlab Docs" class="md-nav__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Quasarlab Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/network/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/visuals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visuals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../incidents/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Incidents
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Incidents
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-09-20-ugreen-it8613-watchdog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-20 UGREEN IT8613 watchdog reboot loop
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-09-19-nfsv4-callback-deadlock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-19 NFSv4 callback deadlock
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-09-12-op-quota-shell-profile/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-12 1Password quota, two reads per SSH session
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-08-24-jellyfin-transcode-disk-exhaustion/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-08-24 Jellyfin transcode disk exhaustion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-05-27-jellyfin-gpu-d3cold-passthrough/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-27 Jellyfin GPU D3cold passthrough
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-05-03-grafana-metallb-pg_hba/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-03 Grafana / MetalLB / pg_hba
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-05-02-op-ratelimit-recurrence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-02 1Password rate-limit recurrence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-19-bitnami-images-removed/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-19 Bitnami images removed
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-18-1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 1Password daily rate-limit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-18-etcd-bloat-rca/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 etcd bloat RCA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-13-alerting-blackout-cascade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-13 Alerting blackout cascade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-07-grafana-pgloader-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-07 Grafana pgloader migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Runbooks
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Runbooks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pg-hba-rejecting-k8s-pods/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres rejecting K8s pods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metallb-no-arp-response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MetalLB IP not answering ARP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../grafana-crashloop/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Grafana CrashLoopBackOff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../etcd-defrag/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    etcd defrag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nas-reboot-evacuate-vm-disks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NAS reboot with zero VM downtime
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nas-storage-tiering-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tiered NAS storage migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    NVMe tiering migration
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    NVMe tiering migration
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ordering-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ordering constraints
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-anything-record-the-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Before anything: record the baseline
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-0-zfs-pool-health-alerting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 0: ZFS pool health alerting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-pbs1-to-pbs2-sync-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: pbs1 to pbs2 sync job
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-rma-193-then-zpool-replace" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: RMA #193, then zpool replace
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-pve-9-and-freenas-proxmox-300" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: PVE 9 and freenas-proxmox 3.0.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-remove-tanks-slog" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: remove tank's SLOG
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 4: remove tank's SLOG">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-exposure-this-opens" class="md-nav__link">
+    <span class="md-ellipsis">
+      The exposure this opens
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-partition-both-drives-and-build-fast" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: partition both drives and build fast
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 5: partition both drives and build fast">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set-a-quota-not-a-refquota" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set a quota, not a refquota
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-migrate-the-zvols" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 6: migrate the zvols
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 6: migrate the zvols">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#migration-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration order
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-irreversible-part" class="md-nav__link">
+    <span class="md-ellipsis">
+      The irreversible part
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-in-scope-tankk8s" class="md-nav__link">
+    <span class="md-ellipsis">
+      Not in scope: tank/k8s
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-decide-on-the-32-gib-slog-slice" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 7: decide on the 32 GiB SLOG slice
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#also-do-independently-of-all-of-the-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      Also do, independently of all of the above
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      Follow-up
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bitnami-image-404/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bitnami image 404
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jellyfin-db-corruption/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin DB corruption
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jellyfin-transcoding-ffmpeg/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcoding / ffmpeg
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jellyfin-transcode-cache-disk-full/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcode cache disk full
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gpu-passthrough-d3cold-recovery/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GPU passthrough D3cold recovery
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password rate-limit hit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pve8-to-pve9-upgrade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PVE 8 to 9 upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../ai-case-studies/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    AI Case Studies
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            AI Case Studies
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-case-studies/2026-09-20-pushing-back-on-the-ai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-20 Pushing back on the AI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../decisions/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Decisions
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Decisions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0001-metallb-l2/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0001 MetalLB L2 not BGP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0002-external-postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0002 External Postgres VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0003-argocd-not-flux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0003 ArgoCD not Flux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0004-bake-monitoring-images/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0004 Bake monitoring images
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0005-healthchecks-deadman/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0005 Healthchecks.io deadman
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0006-database-per-app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0006 Database-per-app
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0007-uptime-kuma-external-monitor/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0007 Uptime Kuma out-of-cluster monitor
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0008-storage-tiering/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0008 Tier the NAS storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisions/0009-nvme-repurposing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0009 What the two SN850X should do
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cheatsheet/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Cheatsheet
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Cheatsheet
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/kubectl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    kubectl
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/helm-argocd/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helm and ArgoCD
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/bash-and-linux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bash and Linux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/prometheus-amtool/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus and amtool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/onepassword-eso/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password and ExternalSecrets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/ansible/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/terraform/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Terraform
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ordering-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ordering constraints
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-anything-record-the-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Before anything: record the baseline
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-0-zfs-pool-health-alerting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 0: ZFS pool health alerting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-pbs1-to-pbs2-sync-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: pbs1 to pbs2 sync job
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-rma-193-then-zpool-replace" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: RMA #193, then zpool replace
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-pve-9-and-freenas-proxmox-300" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: PVE 9 and freenas-proxmox 3.0.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-remove-tanks-slog" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: remove tank's SLOG
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 4: remove tank's SLOG">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-exposure-this-opens" class="md-nav__link">
+    <span class="md-ellipsis">
+      The exposure this opens
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-partition-both-drives-and-build-fast" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: partition both drives and build fast
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 5: partition both drives and build fast">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set-a-quota-not-a-refquota" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set a quota, not a refquota
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-migrate-the-zvols" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 6: migrate the zvols
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 6: migrate the zvols">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#migration-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration order
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-irreversible-part" class="md-nav__link">
+    <span class="md-ellipsis">
+      The irreversible part
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-in-scope-tankk8s" class="md-nav__link">
+    <span class="md-ellipsis">
+      Not in scope: tank/k8s
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-decide-on-the-32-gib-slog-slice" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 7: decide on the 32 GiB SLOG slice
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#also-do-independently-of-all-of-the-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      Also do, independently of all of the above
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      Follow-up
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/mithr4ndir/quasarlab-docs/edit/main/docs/runbooks/nvme-tiering-migration.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="nvme-tiering-migration">NVMe tiering migration<a class="headerlink" href="#nvme-tiering-migration" title="Permanent link">&para;</a></h1>
+<p>The execution plan for <a href="../../decisions/0009-nvme-repurposing/">ADR 0009</a>:
+retire <code>tank</code>'s oversized SLOG, build <code>fast</code> as a mirror of the two SN850X,
+and move 61 VM zvols onto it. This supersedes stages 3 and 4 of the
+<a href="../nas-storage-tiering-migration/">ADR 0008 runbook</a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Read this first: the two drives are coupled</p>
+<p><code>nvme0n1p1</code> <strong>is</strong> <code>tank</code>'s log vdev today. <code>nvme1n1p1</code> is free. They
+cannot both join a mirror until the SLOG is retired, so the SLOG removal
+is a <strong>prerequisite</strong> of building <code>fast</code>, not a follow-up. ADR 0008 has
+these in the opposite order and that order is not executable.</p>
+</div>
+<h2 id="ordering-constraints">Ordering constraints<a class="headerlink" href="#ordering-constraints" title="Permanent link">&para;</a></h2>
+<p>Nothing below is optional and nothing below reorders safely.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Step 0  ZFS health alerting (#175)        ─┐
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Step 1  pbs1 -&gt; pbs2 sync job (#215)       ├─ do these now, this week
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                                           │  they are the interim mitigation
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Step 2  RMA #193, zpool replace x3        ─┤  blocked on vendor
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>Step 3  PVE 9 + freenas-proxmox 3.0.0     ─┤  blocked on step 0 and 1
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Step 4  remove tank&#39;s SLOG                ─┤  irreversible-ish window opens
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Step 5  partition both drives, build fast ─┤
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Step 6  migrate 61 zvols, set quota       ─┤
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Step 7  decide on the 32 GiB SLOG slice   ─┘  blocked on step 6 measurement
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>CANCELLED: ADR 0008 step 4, the tank mirror rebalance. Step 2 replaces it.
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>NOT IN SCOPE: moving tank/k8s. Immutable PV paths. Separate change.
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Blocks on</th>
+<th>Reversible</th>
+<th>Lab exposed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 Alerting</td>
+<td>nothing</td>
+<td>n/a, pure addition</td>
+<td>no</td>
+</tr>
+<tr>
+<td>1 PBS sync</td>
+<td>nothing</td>
+<td>n/a, pure addition</td>
+<td>no</td>
+</tr>
+<tr>
+<td>2 RMA replace</td>
+<td>vendor, step 0</td>
+<td>per-drive, resilver</td>
+<td><strong>yes, resilver load on bad drives</strong></td>
+</tr>
+<tr>
+<td>3 PVE 9</td>
+<td>steps 0, 1</td>
+<td>snapshot/rollback per node</td>
+<td><strong>yes, node reboots</strong></td>
+</tr>
+<tr>
+<td>4 Remove SLOG</td>
+<td>step 3</td>
+<td><code>zpool add tank log</code></td>
+<td><strong>yes, sync latency 4-6x worse until step 6 completes</strong></td>
+</tr>
+<tr>
+<td>5 Build <code>fast</code></td>
+<td>step 4</td>
+<td><code>zpool destroy fast</code></td>
+<td>no</td>
+</tr>
+<tr>
+<td>6 Migrate zvols</td>
+<td>step 5</td>
+<td><code>Move Disk</code> back, per VM</td>
+<td><strong>yes, 2233 snapshots lost irreversibly</strong></td>
+</tr>
+<tr>
+<td>7 SLOG slice</td>
+<td>step 6</td>
+<td><code>zpool remove</code></td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The only irreversible thing in this plan is the snapshot loss in step 6.</strong>
+Everything else can be undone, at a cost. That does not make the rest safe to
+run casually: see the warning on step 4.</p>
+<h2 id="before-anything-record-the-baseline">Before anything: record the baseline<a class="headerlink" href="#before-anything-record-the-baseline" title="Permanent link">&para;</a></h2>
+<p>"It feels faster" is not a result. Capture this and keep the output.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># NAS</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ssh<span class="w"> </span>truenas_admin@192.168.1.15<span class="w"> </span><span class="s1">&#39;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="s1">  sudo zpool status tank</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s1">  sudo zpool list -v -p tank</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s1">  sudo zpool iostat -v -l tank 60 2</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="s1">  sudo zfs list -r -t volume -H -p -o used tank/proxmox_zfs_vms |</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="s1">    awk &quot;{s+=\$1} END {printf \&quot;%.1f GiB used\n\&quot;, s/1073741824}&quot;</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="s1">  sudo zfs list -r -t snapshot -H -o name tank/proxmox_zfs_vms | wc -l</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="s1">  awk &quot;/^(size|c|c_max|hits|misses|l2_hdr_size)/ {print \$1, \$3}&quot; \</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="s1">    /proc/spl/kstat/zfs/arcstats</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="s1">  sudo dmesg | grep -ciE &quot;COMRESET|hard resetting|failed command&quot;</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="s1">&#39;</span>
+</span></code></pre></div>
+<p>Baseline measured 2026-10-07 at 17:39, 16 days 2 hours of uptime:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tank</code></td>
+<td>14.7 T size, 5.03 T alloc, 9.66 T free, 25% frag, 34% cap, ONLINE, 0 errors</td>
+</tr>
+<tr>
+<td>Log vdev write</td>
+<td><strong>49 IOPS, 3.70 MiB/s, 88us <code>disk_wait</code>, 92us <code>total_wait</code></strong></td>
+</tr>
+<tr>
+<td>Data vdev write</td>
+<td>211 IOPS, 8.78 MiB/s, 346-593us <code>disk_wait</code>, 1-2ms <code>total_wait</code></td>
+</tr>
+<tr>
+<td>ARC</td>
+<td><code>size</code> 46.86 GiB, <code>c</code> 48.28 GiB, <code>c_max</code> 61.55 GiB, hit rate 99.08%</td>
+</tr>
+<tr>
+<td><code>l2_hdr_size</code></td>
+<td>0 (L2ARC removed 2026-09-20)</td>
+</tr>
+<tr>
+<td>zvols</td>
+<td>61, <strong>2785.1 GiB provisioned</strong>, 663.8 GiB used, 506.0 GiB referenced</td>
+</tr>
+<tr>
+<td>Snapshots</td>
+<td><strong>2233</strong>, holding 157.8 GiB</td>
+</tr>
+<tr>
+<td><code>ata</code> resets since boot</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>etcd WAL fsync</td>
+<td>about 74 ms (from ADR 0008, <strong>re-measure, this is stale</strong>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="step-0-zfs-pool-health-alerting">Step 0: ZFS pool health alerting<a class="headerlink" href="#step-0-zfs-pool-health-alerting" title="Permanent link">&para;</a></h2>
+<p><strong>Blocking. Do not skip. Do not reorder.</strong></p>
+<p>Three drives dropped off the SATA bus and Prometheus stayed silent
+(ansible-quasarlab#175). Every step from 2 onward puts load on drives that
+have failed before. Running those with no alerting is how 2026-09-20 turned a
+recoverable event into a 4.5 hour wedge and a cold power cycle.</p>
+<p>What must exist before step 2:</p>
+<ul>
+<li>A metric carrying <code>zpool status</code> health per pool, scraped into Prometheus.</li>
+<li>An alert on anything other than <code>ONLINE</code>, and separately on non-zero
+  read/write/checksum counters.</li>
+<li>An alert on resilver in progress, so a resilver nobody started is visible.</li>
+<li>A Discord route that has been <strong>tested</strong>, not assumed.</li>
+</ul>
+<div class="admonition danger">
+<p class="admonition-title">Verify the series exists before trusting the rule</p>
+<p>This lab has shipped vacuous alert rules before: <code>node_exporter</code>
+<code>--collector.systemd.unit-include</code> allowlists made rules for unlisted
+units silently unfirable and hid three real outages. Query the metric in
+Prometheus and confirm it returns data <strong>for <code>tank</code> specifically</strong> before
+believing the rule covers anything.</p>
+</div>
+<p><strong>Rollback point:</strong> none needed, pure addition.</p>
+<h2 id="step-1-pbs1-to-pbs2-sync-job">Step 1: <code>pbs1</code> to <code>pbs2</code> sync job<a class="headerlink" href="#step-1-pbs1-to-pbs2-sync-job" title="Permanent link">&para;</a></h2>
+<p><strong>Blocking. Cheapest risk reduction available.</strong></p>
+<p><code>pbs1</code> (vm103 on pve) runs PBS 3.4.9 with datastore <code>lab</code> on a 600 G disk on
+pve's local <code>SSD2</code>, hourly, all VMs, excluding vm9000, <code>--verify-new</code>,
+retention 24/7/4/3. A restore drill passed: <code>nginx2</code> restored to a scratch
+VMID with hostname, kernel, root filesystem, package count and <code>/etc</code> md5 all
+identical to the live host.</p>
+<p><code>pbs2</code> (vm120 on pve2) is <strong>staged but empty</strong>: <code>qm config 120</code> confirms
+<code>scsi0: ssd_1:vm-120-disk-0,size=32G</code> and <code>scsi1: ssd_2:vm-120-disk-0,size=600G</code>,
+but PBS is not installed and the sync job does not exist.</p>
+<ol>
+<li>Merge ansible-quasarlab#215 and install PBS on <code>pbs2</code>.</li>
+<li>Create a remote + sync job pulling datastore <code>lab</code> from <code>pbs1</code>.</li>
+<li>Run a verify job on <code>pbs2</code>'s datastore.</li>
+<li><strong>Restore one VM from <code>pbs2</code>, not from <code>pbs1</code></strong>, to a scratch VMID, and
+   diff it the way the <code>nginx2</code> drill did.</li>
+</ol>
+<p>Step 4 is the point of the exercise. A sync job that has never been restored
+from is a sync job you are guessing about.</p>
+<div class="admonition note">
+<p class="admonition-title">Why this is on the critical path and not a nice-to-have</p>
+<p>Step 6 irreversibly discards 2233 snapshots. PBS is what replaces them as
+the recovery mechanism for VM disks. One copy of the replacement, on a
+600 G local disk on one node, is thin cover for discarding the other
+mechanism entirely.</p>
+</div>
+<p><strong>Rollback point:</strong> none needed, pure addition.</p>
+<h2 id="step-2-rma-193-then-zpool-replace">Step 2: RMA #193, then <code>zpool replace</code><a class="headerlink" href="#step-2-rma-193-then-zpool-replace" title="Permanent link">&para;</a></h2>
+<p><strong>Blocked on the vendor. Blocked on step 0.</strong></p>
+<p>Three drives are RMA-pending, identifiable by serial prefix. Verified mapping
+as of 2026-10-07:</p>
+<table>
+<thead>
+<tr>
+<th>vdev</th>
+<th>Member</th>
+<th>Serial</th>
+<th>Batch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mirror-0</td>
+<td><code>/dev/sdg1</code></td>
+<td>WD Blue <code>24230KD00111</code></td>
+<td>good</td>
+</tr>
+<tr>
+<td>mirror-0</td>
+<td><code>/dev/sdh1</code></td>
+<td>WD Blue <code>24230KD00129</code></td>
+<td>good</td>
+</tr>
+<tr>
+<td>mirror-1</td>
+<td><code>/dev/sdf1</code></td>
+<td>WD Blue <code>24230KD00005</code></td>
+<td>good</td>
+</tr>
+<tr>
+<td>mirror-1</td>
+<td><code>/dev/sdc1</code></td>
+<td>Inland <code>IB24AK0004S00013</code></td>
+<td><strong>bad</strong></td>
+</tr>
+<tr>
+<td>mirror-2</td>
+<td><code>/dev/sda1</code></td>
+<td>Inland <code>IB24AJ0004S00183</code></td>
+<td>good</td>
+</tr>
+<tr>
+<td>mirror-2</td>
+<td><code>/dev/sde1</code></td>
+<td>Inland <code>IB24AJ0004S00059</code></td>
+<td>good</td>
+</tr>
+<tr>
+<td>mirror-3</td>
+<td><code>/dev/sdd1</code></td>
+<td>Inland <code>IB24AK0004S00064</code></td>
+<td><strong>bad</strong></td>
+</tr>
+<tr>
+<td>mirror-3</td>
+<td><code>/dev/sdb1</code></td>
+<td>Inland <code>IB24AK0004S00004</code></td>
+<td><strong>bad</strong></td>
+</tr>
+</tbody>
+</table>
+<p><code>smartctl -i</code> reports only <code>Inland SATA SSD</code> for all five, so <strong>the serial
+prefix is the discriminator</strong>: <code>IB24AK</code> is the bad batch, <code>IB24AJ</code> is not.</p>
+<div class="admonition danger">
+<p class="admonition-title">Identify the physical tray by serial, never by <code>sd</code> letter</p>
+<p><code>sd</code> letters are not stable across boots. On the DXP8800 the LED <code>diskN</code>
+maps to <code>ataN</code>, which maps to the Nth tray left to right, and <strong>not</strong> to
+<code>sd</code> letters. Confirm which tray someone actually pulled from <code>ata</code> link
+down events in <code>dmesg</code>, not from the letter.</p>
+</div>
+<p>Procedure, <strong>one drive at a time</strong>:</p>
+<ol>
+<li>Confirm <code>zpool status tank</code> is ONLINE with zero errors. If it is not, stop.</li>
+<li><code>zpool replace tank &lt;bad-partuuid&gt; &lt;new-partuuid&gt;</code>.</li>
+<li>Watch the resilver to completion. Watch <code>dmesg</code> for <code>COMRESET</code> and
+   <code>hard resetting link</code> throughout.</li>
+<li>Confirm ONLINE and zero errors before touching the next drive.</li>
+</ol>
+<p>Do <code>mirror-3</code> first (both members bad), then <code>mirror-1</code>.</p>
+<div class="admonition note">
+<p class="admonition-title"><code>replace</code>, not detach-and-attach</p>
+<p><code>zpool replace</code> keeps the old drive in the vdev until the resilver
+completes, so the vdev never runs degraded. A rebalance by detach then
+attach runs the resilver on a deliberately degraded vdev, which is
+precisely the scenario ADR 0008's own consequences section calls "how a
+pool is lost". This is why <strong>ADR 0008 step 4 is cancelled</strong>: the RMA
+dissolves the <code>mirror-3</code> pairing without ever degrading a vdev, and
+rebalancing first would mean six resilvers on bad drives instead of three.</p>
+</div>
+<p><strong>Rollback point:</strong> a <code>zpool replace</code> can be cancelled mid-resilver with
+<code>zpool detach</code> of the incoming device. The vdev returns to its prior
+membership.</p>
+<p><strong>Lab exposed:</strong> yes. Resilver reads put sustained load on drives whose
+failure trigger is <strong>not established</strong>, so "wait for a quiet moment" is not a
+mitigation. One vdev at a time, alerting live, PBS verified.</p>
+<h2 id="step-3-pve-9-and-freenas-proxmox-300">Step 3: PVE 9 and <code>freenas-proxmox</code> 3.0.0<a class="headerlink" href="#step-3-pve-9-and-freenas-proxmox-300" title="Permanent link">&para;</a></h2>
+<p><strong>Blocked on steps 0 and 1. Blocks step 5.</strong></p>
+<p>Both nodes run <code>pve-manager/8.4.21</code>, EOL since 2026-08-31. The ZFS-over-iSCSI
+plugin is held:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$ apt-mark showhold
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>freenas-proxmox
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>$ dpkg -l freenas-proxmox
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>hi  freenas-proxmox  2.4.0-1  all
+</span></code></pre></div>
+<p>2.4.0-1 <strong>fails</strong> the PVE 8 to 9 dist-upgrade through its dpkg trigger, and per
+upstream ADR-009 only plugin v3.0.0 loads on PVE 8.4 (<code>api()</code> 11 against
+APIVER 11).</p>
+<p><strong>Why this is sequenced before <code>fast</code> and not after.</strong> <code>fast</code> needs a second
+<code>zfs:</code> storage definition, interpreted by this plugin. Defining it against
+2.4.0 means validating the whole migration against a plugin that must then be
+replaced, and revalidating afterwards. Do the plugin work once, then define
+<code>fast</code> once.</p>
+<p>Order within the step:</p>
+<ol>
+<li>Upgrade the plugin to 3.0.0 on PVE 8.4 first, while the existing
+   <code>truenas-iscsi</code> definition is the only one in play. Confirm VMs still
+   start, stop and snapshot.</li>
+<li>Then dist-upgrade to PVE 9, one node at a time.</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">etcd and the node order</p>
+<p>2 of 3 etcd members (<code>k8cluster2</code>, <code>k8cluster3</code>) are both on <strong>pve2</strong>, and
+their disks are node-local, so they are <strong>not clean live migrations</strong>.
+Rebooting pve2 kills the Kubernetes control plane quorum. Upgrade <strong>pve
+first</strong>, confirm the cluster is healthy, then pve2.</p>
+<p>Live migration between the nodes is impossible regardless (Intel pve
+against AMD pve2), so every VM relocation here is shutdown-and-start.</p>
+</div>
+<p><strong>Rollback point:</strong> per node, a pre-upgrade snapshot or a known-good kernel
+entry. Keep the old plugin <code>.deb</code> on disk.</p>
+<p><strong>Lab exposed:</strong> yes, node reboots, control plane quorum on the pve2 reboot.</p>
+<h2 id="step-4-remove-tanks-slog">Step 4: remove <code>tank</code>'s SLOG<a class="headerlink" href="#step-4-remove-tanks-slog" title="Permanent link">&para;</a></h2>
+<p><strong>Blocked on step 3. This opens the exposure window.</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># The device: PARTUUID a1bfbe13-bfc0-4e7c-92e4-c28c963225e6 = nvme0n1p1</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sudo<span class="w"> </span>zpool<span class="w"> </span>remove<span class="w"> </span>tank<span class="w"> </span>a1bfbe13-bfc0-4e7c-92e4-c28c963225e6
+</span></code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">This is a pool topology change on an appliance that has wedged</p>
+<p>On 2026-09-20 a <code>zpool remove</code> of the <strong>cache</strong> vdev, pitched in ADR 0008
+as "instant, reversible, no migration", aggravated an already-overloaded
+NAS into a 4.5 hour wedge and forced a cold power cycle.</p>
+<p>Removing a <strong>log</strong> vdev is mechanically a much smaller operation: that
+removal had 20.6 GiB of <code>l2_hdr_size</code> to tear out of ARC, and a log
+removal has no ARC work at all. It quiesces the ZIL, flushes outstanding
+sync writes to the data vdevs, and detaches.</p>
+<p><strong>That is not permission to run it casually.</strong> "Reversible" and "safe to
+run right now" are different claims and ADR 0008 collapsed them. Run it
+in a window, at low load, with alerting live, PBS verified, and
+<code>zpool iostat -v -l tank 5</code> open in another pane.</p>
+<p>Never run a pool topology change mid-incident.</p>
+</div>
+<h3 id="the-exposure-this-opens">The exposure this opens<a class="headerlink" href="#the-exposure-this-opens" title="Permanent link">&para;</a></h3>
+<p>From this moment until the last VM leaves <code>tank</code> in step 6, every guest
+<code>fsync</code> on <code>tank</code> lands on the SATA mirrors. Measured difference:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>With SLOG</th>
+<th>Without (predicted)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sync write <code>disk_wait</code></td>
+<td>88us</td>
+<td>346-593us</td>
+</tr>
+<tr>
+<td>Sync write <code>total_wait</code></td>
+<td>92us</td>
+<td>1-2ms</td>
+</tr>
+</tbody>
+</table>
+<p>Roughly <strong>4x to 6x worse per sync write</strong>, and sync writes now contend with
+data writes on the same devices. 42% of the bytes reaching <code>tank</code>'s data
+vdevs currently pass through the ZIL first, so this is not a corner case.</p>
+<p>The thing that cares most is <strong>etcd WAL fsync</strong>, baseline about 74 ms, with 2
+of 3 members on pve2. Re-measure it immediately after the removal and again
+after step 6.</p>
+<div class="admonition note">
+<p class="admonition-title">Why take this hit rather than avoid it</p>
+<p>The alternative ordering is to build <code>fast</code> as a single-device pool on the
+already-free <code>nvme1n1</code>, migrate everything, then remove the SLOG and
+attach <code>nvme0n1p2</code> to make it a mirror. That keeps the 92us sync path for
+the whole migration.</p>
+<p>It also puts <strong>every VM disk in the lab on one non-redundant device</strong> for
+the duration of the migration plus the subsequent resilver. That trades a
+bounded, measurable, reversible performance cost for an unbounded
+data-loss cost. Take the latency hit.</p>
+</div>
+<p><strong>Rollback point:</strong> <code>zpool add tank log a1bfbe13-...</code> restores it in seconds,
+at any time before step 5 repartitions the drive. <strong>After step 5 the partition
+is gone and this rollback no longer exists</strong>, which is why step 5 creates the
+32 GiB replacement slices.</p>
+<h2 id="step-5-partition-both-drives-and-build-fast">Step 5: partition both drives and build <code>fast</code><a class="headerlink" href="#step-5-partition-both-drives-and-build-fast" title="Permanent link">&para;</a></h2>
+<p><strong>Blocked on step 4.</strong></p>
+<p>Partition <strong>both</strong> SN850X identically: a 32 GiB <code>p1</code> and the remainder as
+<code>p2</code>. Build the mirror on the <code>p2</code> pair. <strong>Leave both <code>p1</code> slices unused.</strong></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>nvme0n1  -&gt;  p1  32 GiB   (unused, reserved for a log vdev)
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>             p2  ~3.61 TiB -&gt; fast mirror leg
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>nvme1n1  -&gt;  p1  32 GiB   (unused, reserved)
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>             p2  ~3.61 TiB -&gt; fast mirror leg
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">This decision cannot be deferred</p>
+<p>You cannot carve a partition off a drive that is already a whole-disk vdev
+member without destroying the pool. The SLOG role is
+<a href="../../decisions/0009-nvme-repurposing/#finding-1-the-slog-is-earning-its-place">measurably real</a>,
+so the option has to be preserved now or not at all. The cost is 64 GiB
+of 7.3 TiB raw. The cost of skipping it is redoing this entire migration.</p>
+<p>ZFS on partitions is already how this box works: <code>boot-pool</code> is
+<code>nvme2n1p3</code>, and today's SLOG is itself <code>nvme0n1p1</code>, not a whole disk.</p>
+</div>
+<p>Then create the pool with <code>ashift=12</code> to match the existing vdevs (verified:
+every <code>tank</code> vdev is <code>ashift: 12</code>), and a <code>proxmox_zfs_vms</code> child with the
+same properties the current one has: <code>volblocksize</code>/<code>recordsize</code> 16 K,
+<code>compression=lz4</code>, <code>sync=standard</code>, <code>logbias=latency</code>.</p>
+<h3 id="set-a-quota-not-a-refquota">Set a <code>quota</code>, not a <code>refquota</code><a class="headerlink" href="#set-a-quota-not-a-refquota" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>quota on fast/proxmox_zfs_vms = 2.5T
+</span></code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title"><code>refquota</code> on the parent bounds nothing</p>
+<p><code>tank/proxmox_zfs_vms</code> has <code>refquota=4T</code> and it is <strong>vacuous</strong>. Verified:
+the parent reports <code>AVAIL 4.00T</code> while <strong>every child zvol reports
+<code>AVAIL 9.53T</code></strong>, the whole pool's free space. <code>refquota</code> excludes
+descendants. Proxmox displays it as the storage ceiling anyway.</p>
+<p>61 zvols commit <strong>2785.1 GiB</strong> thin against 663.8 GiB actually used. On a
+3.64 TiB mirror that is 75% committed before a single snapshot, and ZFS
+degrades past roughly 80%. On <code>tank</code> the overcommit was harmless because
+9.66 T was free. On <code>fast</code> it is not.</p>
+<p><code>zvol_enforce_quotas</code> is <code>1</code>, so a real <code>quota</code> <strong>will</strong> be honoured.
+<strong>Verify it by reading <code>AVAIL</code> on a child zvol, not on the parent.</strong></p>
+</div>
+<p><strong>Rollback point:</strong> <code>zpool destroy fast</code> while it is empty. The <code>p1</code> slices
+mean step 4's rollback (<code>zpool add tank log &lt;p1&gt;</code>) is available again from
+here on.</p>
+<h2 id="step-6-migrate-the-zvols">Step 6: migrate the zvols<a class="headerlink" href="#step-6-migrate-the-zvols" title="Permanent link">&para;</a></h2>
+<p><strong>Blocked on step 5. Contains the only irreversible action in this plan.</strong></p>
+<p>Add the <code>fast</code> storage definition in <code>/etc/pve/storage.cfg</code>, mirroring the
+existing one but pointing at the new pool. For reference, the current
+definition:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>zfs: truenas-iscsi
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    blocksize 16k
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    iscsiprovider freenas
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    pool tank/proxmox_zfs_vms
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    portal 10.10.12.2
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    target iqn.2005-10.org.freenas.ctl:proxmox-cluster
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    content images
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    sparse 1
+</span></code></pre></div>
+<p>Then move disks with the PVE <strong><code>Move Disk</code></strong> action, one VM at a time. This is
+the same technique that rebooted the NAS with zero VM downtime on 2026-09-19;
+the <a href="../nas-reboot-evacuate-vm-disks/">existing runbook</a> covers the throttle
+and the etcd cautions and they apply unchanged.</p>
+<h3 id="migration-order">Migration order<a class="headerlink" href="#migration-order" title="Permanent link">&para;</a></h3>
+<p>Sync-sensitive first, so the workloads that suffer most from step 4's
+regression spend the least time on the SLOG-less pool:</p>
+<ol>
+<li><strong>etcd members.</strong> <code>k8cluster2</code> and <code>k8cluster3</code> are both on pve2. One at a
+   time, confirming quorum between each.</li>
+<li>The Postgres VM, and anything else with a database.</li>
+<li><code>command-center1</code>, noting that its cloud-init drive is on the NAS (#199).</li>
+<li>Everything else.</li>
+<li><strong>The QDevice VM last</strong>, or plan around it: it provides the third corosync
+   vote and it runs on the NAS.</li>
+</ol>
+<h3 id="the-irreversible-part">The irreversible part<a class="headerlink" href="#the-irreversible-part" title="Permanent link">&para;</a></h3>
+<div class="admonition danger">
+<p class="admonition-title"><code>Move Disk</code> discards snapshots. 2233 of them, holding 157.8 GiB.</p>
+<p><code>Move Disk</code> copies current state only. PVE-level snapshots do not survive
+it and neither do the hourly TrueNAS periodic snapshots.</p>
+<p><strong>This is acceptable now and was not when ADR 0008 was written.</strong> Before
+2026-10-06 those snapshots were the only recovery mechanism for VM disks.
+PBS now is: hourly, all VMs, <code>--verify-new</code>, 24/7/4/3, with a restore
+verified against <code>nginx2</code>. <strong>Step 1 existing is what makes this step
+affordable.</strong> If step 1 is not done, do not run step 6.</p>
+<p>Confirm a current PBS backup for each VM immediately before moving it.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title"><code>zfs send -R</code> is not an alternative</p>
+<p>It would preserve all 2233 snapshots, but the <code>freenas-proxmox</code> plugin
+creates the SCST extents through the TrueNAS API. Hand-replicated zvols
+arrive with <strong>no iSCSI target mapping</strong>, so PVE cannot attach them. Use
+<code>Move Disk</code> and accept the loss.</p>
+</div>
+<p><strong>Rollback point:</strong> per VM, <code>Move Disk</code> back to <code>truenas-iscsi</code>. The snapshots
+are already gone by then and do not come back.</p>
+<h3 id="not-in-scope-tankk8s">Not in scope: <code>tank/k8s</code><a class="headerlink" href="#not-in-scope-tankk8s" title="Permanent link">&para;</a></h3>
+<p>ADR 0008 step 2 moves <code>tank/k8s</code> (45.9 G) alongside the zvols. <strong>Do not.</strong></p>
+<p>Every Kubernetes PV has the dataset path baked into an immutable field.
+Verified on Loki's 50 Gi volume:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">nfs</span><span class="p">:</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/mnt/tank/k8s/monitoring/storage-loki-0</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">server</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.1.15</span>
+</span></code></pre></div>
+<p><code>spec.nfs.path</code> is immutable on a PV. Moving the dataset invalidates roughly
+twenty bound PVs, each needing deletion and recreation with <code>volumeName</code>
+re-binding, plus a Helm values change for <code>nfs-subdir-external-provisioner</code>'s
+<code>NFS_PATH</code>. Different work, different failure mode (pods stuck mounting), and
+it should not ride along with a zvol migration. Those PVs also target
+<code>192.168.1.15</code>, the <strong>1 G LAN</strong> interface, not <code>10.10.12.2</code> on the 10 G
+storage network, so NVMe backing would be partly wasted behind the transport.</p>
+<h2 id="step-7-decide-on-the-32-gib-slog-slice">Step 7: decide on the 32 GiB SLOG slice<a class="headerlink" href="#step-7-decide-on-the-32-gib-slog-slice" title="Permanent link">&para;</a></h2>
+<p><strong>Blocked on step 6, and on measurement.</strong></p>
+<p>With the VM disks gone, <code>tank</code>'s sync load should collapse to NFS-<code>sync</code>
+traffic on <code>media</code>, <code>isos</code>, <code>k8s</code>, <code>terraform</code> and <code>files</code> only. Measure it:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>sudo<span class="w"> </span>zpool<span class="w"> </span>iostat<span class="w"> </span>-v<span class="w"> </span>-l<span class="w"> </span>tank<span class="w"> </span><span class="m">60</span><span class="w"> </span><span class="m">5</span>
+</span></code></pre></div>
+<ul>
+<li><strong>If log-vdev-equivalent sync traffic is negligible</strong>, leave the <code>p1</code> slices
+  unused. <code>tank</code> genuinely does not want a log device any more, and <em>that</em> is
+  when ADR 0008 step 3's conclusion becomes correct, for reasons it did not
+  give.</li>
+<li><strong>If NFS write latency regressed</strong>, <code>zpool add tank log &lt;nvme0n1p1&gt;</code>.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">A log slice on a <code>fast</code> mirror member is acceptable</p>
+<p>If <code>nvme0n1</code> then fails, <code>fast</code> goes degraded (survivable, it is a mirror)
+and <code>tank</code> loses its log (survivable, the pool imports and only in-flight
+sync writes from a simultaneous crash are at risk). The two pools share a
+physical device, which is worth knowing, but neither loses data from it.</p>
+<p>A single-device log is not the hazard it was before ZFS supported log
+device removal and pool import without one.</p>
+</div>
+<p><strong>Rollback point:</strong> <code>zpool remove tank &lt;p1&gt;</code> at any time.</p>
+<h2 id="also-do-independently-of-all-of-the-above">Also do, independently of all of the above<a class="headerlink" href="#also-do-independently-of-all-of-the-above" title="Permanent link">&para;</a></h2>
+<p><strong>Cap <code>zfs_arc_max</code> at 48 GiB</strong> (<code>51539607552</code> bytes), in Ansible, not by
+hand.</p>
+<p><code>zfs_arc_max</code> is <code>0</code> today, so <code>c_max</code> is 66,086,522,880 bytes, <strong>61.55 GiB of
+62 GiB host RAM</strong>. ARC has self-tuned to a 48.28 GiB target and 46.86 GiB
+actual, so 48 GiB pins it where it already sits and removes only the headroom
+to balloon and starve SCST, <code>nfsd</code>, <code>middlewared</code>, <code>ix-apps</code> and the QDevice
+VM.</p>
+<div class="admonition note">
+<p class="admonition-title">Do not credit this with fixing anything</p>
+<p>The specific RAM pressure that contributed to 2026-09-20 was
+<code>l2_hdr_size</code> at 20.6 GiB and it is <strong>already gone</strong> (<code>l2_hdr_size</code> reads
+<code>0</code>). <code>arc_no_grow</code> is <code>0</code> and <code>evict_skip</code> is 8,161, so ARC is not under
+pressure today. This is a cheap ceiling against a future workload, not a
+remedy for an observed problem. High confidence it is harmless, medium
+confidence it is necessary.</p>
+</div>
+<h2 id="follow-up">Follow-up<a class="headerlink" href="#follow-up" title="Permanent link">&para;</a></h2>
+<p>Fill in the <a href="../../decisions/0009-nvme-repurposing/#validation">validation table in ADR 0009</a>
+as each step lands, and leave the unfilled rows visibly unfilled.</p>
+<p>ADR 0008 warned against "a plan recorded as though it were an outcome", then
+had step 1 executed with all three of its predicted outcomes unrecorded and
+none of them true as written. The warning was right and was not followed.</p>
+<p>The row most likely to be skipped is the <code>quota</code> check, and it is the one that
+has already caught this lab out: <strong>read <code>AVAIL</code> on a child zvol, not on the
+parent.</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/mithr4ndir" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
