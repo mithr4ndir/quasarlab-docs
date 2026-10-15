@@ -96,9 +96,50 @@ pools: 0 pools, 0 pgs           objects: 0 objects, 0 B
 ```
 
 `HEALTH_WARN` is only `OSD count 0 < osd_pool_default_size 3`. There is **no
-`ceph` entry in `/etc/pve/storage.cfg`** at all. So this is a Ceph that was
-started and never finished, backing zero storage. The fix is to destroy it and
-remove the `ceph-reef` repo, not to attempt a Reef to Squid migration.
+`ceph` entry in `/etc/pve/storage.cfg`**, no `rbd:` or `cephfs:` storage, no
+guest config that mentions ceph, and no device claimed by `ceph-volume`.
+`/etc/pve/ceph.conf` is dated **2024-10-01**, so this has been dead weight for
+over two years. It was started and never finished. The fix is a cleanup, not a
+Reef to Squid migration.
+
+### Do not purge all the ceph packages {#ceph-dependency-trap}
+
+Measured 2026-10-15, and this is the part that will bite you.
+`pve-qemu-kvm` and `libpve-storage-perl` link against the Ceph client
+libraries, so `apt purge` of the obvious `ceph*` glob cascades into PVE itself.
+`apt-get purge -s` of every ceph package on pve reports it would also purge:
+
+```
+pve-ha-manager   qemu-server   pve-qemu-kvm
+libpve-guest-common-perl   libpve-storage-perl
+```
+
+That removes the ability to run virtual machines at all. **Keep**
+`ceph-common`, `libcephfs2`, `python3-cephfs`, `python3-ceph-common`,
+`python3-ceph-argparse` and `ceph-fuse`.
+
+Only the server side daemons can go. On pve that is exactly these eight, and
+`apt-get purge -s` confirms nothing else is touched:
+
+```
+ceph  ceph-base  ceph-mds  ceph-mgr  ceph-mgr-modules-core
+ceph-mon  ceph-osd  ceph-volume
+```
+
+**pve2 needs no package work.** It has no server side ceph at all, only the six
+client packages listed above as keepers, which PVE core depends on.
+
+A note on verifying this yourself: `apt-get purge -s` prints `Purg`, not
+`Remv`. A danger check that greps only for `^Remv` matches nothing and hands
+you a false all clear. Grep for both, and confirm the check can actually fail
+by looking at the package list it prints.
+
+### Leave the ceph apt repo alone until the upgrade
+
+`/etc/apt/sources.list.d/ceph.list` (`ceph-reef bookworm`) is present on
+**both** nodes, and it is where the kept `ceph-common` comes from. Deleting it
+orphans a package that `pve-qemu-kvm` depends on. At Phase C, re-point it at
+the PVE 9 Ceph repo (squid) rather than removing it.
 
 **pve2:** two more failures, both straightforward.
 
@@ -165,9 +206,16 @@ Each of these is small and independently verifiable, and none of them require
 the upgrade to proceed. Doing them first makes `pve8to9` clean, which is the
 real go or no-go signal.
 
-1. **pve:** destroy the vestigial Ceph (mon and mgr on pve, zero OSDs, zero
-   pools), purge the ceph packages, remove the `ceph-reef bookworm` repo.
-   Confirm no guest config and no `storage.cfg` entry references ceph first.
+1. **pve:** remove the vestigial Ceph. Stop and destroy the mgr and the mon
+   (zero OSDs and zero pools, so there is nothing to drain), then purge **only
+   the eight server side packages** listed in
+   [the dependency trap above](#ceph-dependency-trap). Keep `ceph-common` and
+   the client libraries, and leave `ceph.list` in place. Then remove
+   `/etc/pve/ceph.conf`, the `/etc/ceph` symlink and keyring, and
+   `/var/lib/ceph/{mon,mgr}/ceph-pve` (20 MiB). pve2 needs no package work.
+   Re-run `pve8to9` to confirm the FAIL clears. Note `pveceph purge` behaviour
+   on a last remaining mon has not been validated here, so check it before
+   relying on it.
 2. **pve:** `apt install grub-efi-amd64`, then set
    `grub2/force_efi_extra_removable` and reinstall grub so the ESP is actually
    maintained. Verify a kernel install lands in `/boot/efi`.
