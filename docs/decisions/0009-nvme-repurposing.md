@@ -479,6 +479,14 @@ in.
   retention and a restore verified against `nginx2` (hostname, kernel, root
   filesystem, package count and `/etc` md5 all identical). **PBS landing is
   what makes this step affordable.**
+- **Since 2026-10-15 the PBS cadence in the point above is daily, not hourly**
+  (ansible-quasarlab#241), with retention 1/7/4/3 rather than 24/7/4/3. The
+  table and the argument above are left as written, because they record what
+  was true when this decision was taken. The decision does not change: PBS is
+  still the recovery mechanism that makes losing the snapshots affordable. What
+  changes is the number behind "affordable", from an hour of exposure to a day,
+  so step 6 of the runbook now says to trigger a backup by hand immediately
+  before a `Move Disk` instead of relying on the hourly run.
 - **`zfs send -R` is not an alternative for preserving them.** The
   `freenas-proxmox` plugin creates the SCST extents through the TrueNAS API, so
   hand-replicated zvols would arrive with no iSCSI target mapping. Use

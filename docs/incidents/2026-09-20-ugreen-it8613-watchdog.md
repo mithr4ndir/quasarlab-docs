@@ -218,7 +218,8 @@ set `ipconfig0` explicitly. Everything else inherited the module default
       stay Ansible-independent.
 - [ ] Move the QDevice off the NAS and the cloud-init drive off iSCSI
       (ansible-quasarlab#199).
-- [ ] PBS hourly backups for command-center1 on pve-local (ansible-quasarlab#201).
+- [ ] PBS backups for command-center1 on pve-local (ansible-quasarlab#201). The
+      lab-wide schedule became daily on 2026-10-15 (ansible-quasarlab#241).
 - [x] Pin static IPs in Terraform (terraform-quasarlab#25), otherwise the next
       `apply` reverts them to DHCP.
 

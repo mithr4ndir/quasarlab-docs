@@ -109,10 +109,17 @@ What must exist before step 2:
 **Blocking. Cheapest risk reduction available.**
 
 `pbs1` (vm103 on pve) runs PBS 3.4.9 with datastore `lab` on a 600 G disk on
-pve's local `SSD2`, hourly, all VMs, excluding vm9000, `--verify-new`,
-retention 24/7/4/3. A restore drill passed: `nginx2` restored to a scratch
-VMID with hostname, kernel, root filesystem, package count and `/etc` md5 all
-identical to the live host.
+pve's local `SSD2`, once a day at 10:00 UTC, all VMs, excluding vm9000,
+`--verify-new`, retention 1/7/4/3. A restore drill passed: `nginx2` restored to
+a scratch VMID with hostname, kernel, root filesystem, package count and `/etc`
+md5 all identical to the live host.
+
+Backups were hourly with retention 24/7/4/3 until 2026-10-15
+(ansible-quasarlab#241). **The RPO is now 24 hours, not one**, which matters in
+step 6 below: a backup taken "recently" is no longer necessarily within the
+hour. The schedule is pinned to UTC rather than written as a local time because
+a cluster backup job is evaluated on every node in that node's local time, and
+pve is `America/Los_Angeles` while pve2 is `America/New_York`.
 
 `pbs2` (vm120 on pve2) is **staged but empty**: `qm config 120` confirms
 `scsi0: ssd_1:vm-120-disk-0,size=32G` and `scsi1: ssd_2:vm-120-disk-0,size=600G`,
@@ -392,11 +399,15 @@ regression spend the least time on the SLOG-less pool:
 
     **This is acceptable now and was not when ADR 0008 was written.** Before
     2026-10-06 those snapshots were the only recovery mechanism for VM disks.
-    PBS now is: hourly, all VMs, `--verify-new`, 24/7/4/3, with a restore
-    verified against `nginx2`. **Step 1 existing is what makes this step
-    affordable.** If step 1 is not done, do not run step 6.
+    PBS now is: daily at 10:00 UTC, all VMs, `--verify-new`, 1/7/4/3, with a
+    restore verified against `nginx2`. **Step 1 existing is what makes this
+    step affordable.** If step 1 is not done, do not run step 6.
 
-    Confirm a current PBS backup for each VM immediately before moving it.
+    Confirm a current PBS backup for each VM immediately before moving it. With
+    a daily schedule that means **triggering the job by hand** rather than
+    assuming the hourly run has been past recently: run it from the PVE UI, or
+    `pvesh create /nodes/<node>/vzdump --vmid <vmid> --storage pbs-lab
+    --mode snapshot`, and wait for the task to report OK.
 
 !!! note "`zfs send -R` is not an alternative"
     It would preserve all 2233 snapshots, but the `freenas-proxmox` plugin
