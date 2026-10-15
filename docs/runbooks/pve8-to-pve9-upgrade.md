@@ -5,8 +5,90 @@ Status: **planned, not started.** Facts below were measured on 2026-10-07.
 ## Why now
 
 Both hypervisors run `pve-manager/8.4.21` on Debian bookworm, kernel
-`6.8.12-43-pve`. Proxmox VE 8 reached end of life on **2026-08-31**, so the pair
-that runs the entire lab has been receiving no security updates for five weeks.
+`6.8.12-43-pve`. Proxmox VE 8 reached end of life on **2026-08-31**.
+
+### PVE 9 buys this lab almost nothing in features
+
+Worth stating plainly, because it changes how much urgency this deserves.
+Checked against the 9.0, 9.1 and 9.2 feature lists on 2026-10-15.
+
+Does not apply here:
+
+| Feature | Why it does not land |
+|---|---|
+| Snapshots as volume chains (9.0) | Targets LVM and shared storage with no native snapshots. Ours is ZFS-over-iSCSI, which snapshots natively already. |
+| ZFS 2.3.4 / 2.4 | PVE root is LVM (`/dev/mapper/pve-root`) and our ZFS lives on the NAS, so PVE's ZFS version is irrelevant. |
+| LXC containers from OCI images (9.1) | `pve8to9` reports no containers on either node. |
+| GlusterFS and cgroupv1 dropped | Not used. |
+
+Applies in theory, blocked by our own constraints:
+
+- **CRS dynamic load balancing (9.2)** is unusable. `cpu: host` across an Intel
+  pve and an AMD pve2 blocks live migration, and seven guests are pinned by
+  local lvmthin.
+- **HA affinity and negative affinity rules** map onto a real problem, both
+  spare etcd members sitting on pve2, but are defeated by that same pinning.
+  They only pay off after Phase A puts those disks on shared storage.
+- **`disarm-ha` / `arm-ha` (9.2)** would make the *next* upgrade safer, not
+  this one.
+
+Costs rather than benefits: `VM.Monitor` is removed, which breaks the
+`AnsibleInventory` role; the release notes warn of "Potential changes in
+network interface names", a live risk given the 10G direct NIC-to-NAS link; and
+AppArmor 4. The one plausible small win is **extended metrics collection**
+(9.0), worth a look given how much we lean on Prometheus, but not a reason to
+upgrade.
+
+### The actual case is that the kernel and QEMU stopped being patched
+
+Measured 2026-10-15. The cleanest evidence is the repo metadata itself, fetched
+live from the remote so a stale local cache cannot fake it:
+
+```
+remote bookworm InRelease:  Date: Wed, 26 Aug 2026 17:56:10 +0000
+remote trixie   InRelease:  Date: Wed, 14 Oct 2026 17:22:48 +0000
+```
+
+**The PVE 8 channel stopped being rebuilt on 2026-08-26**, five days before the
+announced EOL, and has not moved in the seven weeks since. The PVE 9 channel
+was rebuilt yesterday. On both nodes, installed equals candidate for
+`pve-manager` (8.4.21) and `pve-qemu-kvm` (9.2.0-8), with zero PVE updates
+pending.
+
+One correction worth recording, because the obvious version of this claim is
+wrong. The kernel is **not** stuck at 6.8 for lack of alternatives: the 8.4
+repo still offers opt-in `proxmox-kernel-6.11` (`6.11.11-2`) and
+`proxmox-kernel-6.14` (`6.14.11-9~bpo12+1`) for bookworm. They are frozen along
+with everything else in that channel, but 6.14.11 is a far newer baseline than
+the running `6.8.12-43`. **If we defer PVE 9, opting into
+`proxmox-kernel-6.14` is a cheap way to close most of the kernel gap** without
+any of the Phase C risk. It does nothing for QEMU.
+
+Debian underneath is **still covered**: bookworm moved to LTS, with security
+support to 2028-06-30, though LTS is narrower than regular support. The catch
+is that `proxmox-kernel-*` and `pve-qemu-kvm` are **Proxmox-built packages, not
+Debian ones**, so Debian LTS does nothing for them. `pve-qemu-kvm` is the one
+with no remaining mitigation at all, and QEMU is the component that matters
+most for a guest-to-host escape.
+
+That is not abstract here. The 2026-08-20 security sweep flagged RCON port
+25575 WAN-exposed with `src=any`, and palworld (`106`) is a guest on pve2. An
+internet-reachable guest in front of a frozen QEMU is the one chain where this
+actually bites. **Closing that firewall rule buys more real security, sooner,
+than this entire upgrade does.** Do that first, regardless.
+
+### Decision: the phases are decoupled
+
+Agreed 2026-10-15. **Phase A is approved and proceeds on its own merits**,
+whether or not PVE 9 ever happens, because it:
+
+- retires the cleartext TrueNAS root password in `storage.cfg` (see below),
+- gets us off the Cloudsmith repo, which caps at `3.0.0-1` and is being retired
+  upstream,
+- and is the mandatory prerequisite if we do later want PVE 9.
+
+Phase B and Phase C are **not** approved yet. Revisit them once Phase A is done
+and the plugin is no longer the blocker.
 
 ## The finding that reshapes this project
 
