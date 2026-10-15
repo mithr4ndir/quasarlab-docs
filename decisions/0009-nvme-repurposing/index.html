@@ -1,0 +1,3335 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Architecture, runbooks, incidents, and command references for my homelab.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.herro.me/decisions/0009-nvme-repurposing/">
+      
+      
+        <link rel="prev" href="../0008-storage-tiering/">
+      
+      
+        <link rel="next" href="../../cheatsheet/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.45">
+    
+    
+      
+        <title>0009 What the two SN850X should do - Quasarlab Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0253249f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-0009-what-the-two-sn850x-should-actually-do" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Quasarlab Docs" class="md-header__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Quasarlab Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              0009 What the two SN850X should do
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../incidents/" class="md-tabs__link">
+          
+  
+    
+  
+  Incidents
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../runbooks/" class="md-tabs__link">
+          
+  
+    
+  
+  Runbooks
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ai-case-studies/" class="md-tabs__link">
+          
+  
+    
+  
+  AI Case Studies
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+    
+  
+  Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cheatsheet/" class="md-tabs__link">
+          
+  
+    
+  
+  Cheatsheet
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Quasarlab Docs" class="md-nav__button md-logo" aria-label="Quasarlab Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Quasarlab Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mithr4ndir/quasarlab-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mithr4ndir/quasarlab-docs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/network/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Network
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/monitoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/visuals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visuals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../incidents/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Incidents
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Incidents
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-09-20-ugreen-it8613-watchdog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-20 UGREEN IT8613 watchdog reboot loop
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-09-19-nfsv4-callback-deadlock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-19 NFSv4 callback deadlock
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-09-12-op-quota-shell-profile/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-12 1Password quota, two reads per SSH session
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-08-24-jellyfin-transcode-disk-exhaustion/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-08-24 Jellyfin transcode disk exhaustion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-05-27-jellyfin-gpu-d3cold-passthrough/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-27 Jellyfin GPU D3cold passthrough
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-05-03-grafana-metallb-pg_hba/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-03 Grafana / MetalLB / pg_hba
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-05-02-op-ratelimit-recurrence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-05-02 1Password rate-limit recurrence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-19-bitnami-images-removed/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-19 Bitnami images removed
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-18-1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 1Password daily rate-limit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-18-etcd-bloat-rca/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-18 etcd bloat RCA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-13-alerting-blackout-cascade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-13 Alerting blackout cascade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../incidents/2026-04-07-grafana-pgloader-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-04-07 Grafana pgloader migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../runbooks/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Runbooks
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Runbooks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/pg-hba-rejecting-k8s-pods/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres rejecting K8s pods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/metallb-no-arp-response/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MetalLB IP not answering ARP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/grafana-crashloop/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Grafana CrashLoopBackOff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/etcd-defrag/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    etcd defrag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/nas-reboot-evacuate-vm-disks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NAS reboot with zero VM downtime
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/nas-storage-tiering-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tiered NAS storage migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/nvme-tiering-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NVMe tiering migration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/bitnami-image-404/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bitnami image 404
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-db-corruption/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin DB corruption
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-transcoding-ffmpeg/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcoding / ffmpeg
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/jellyfin-transcode-cache-disk-full/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jellyfin transcode cache disk full
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/gpu-passthrough-d3cold-recovery/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GPU passthrough D3cold recovery
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/1password-rate-limit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password rate-limit hit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../runbooks/pve8-to-pve9-upgrade/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PVE 8 to 9 upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../ai-case-studies/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    AI Case Studies
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            AI Case Studies
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ai-case-studies/2026-09-20-pushing-back-on-the-ai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    2026-09-20 Pushing back on the AI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Decisions
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Decisions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0001-metallb-l2/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0001 MetalLB L2 not BGP
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0002-external-postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0002 External Postgres VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0003-argocd-not-flux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0003 ArgoCD not Flux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0004-bake-monitoring-images/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0004 Bake monitoring images
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0005-healthchecks-deadman/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0005 Healthchecks.io deadman
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0006-database-per-app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0006 Database-per-app
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0007-uptime-kuma-external-monitor/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0007 Uptime Kuma out-of-cluster monitor
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0008-storage-tiering/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    0008 Tier the NAS storage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    0009 What the two SN850X should do
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    0009 What the two SN850X should do
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      The question
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-since-adr-0008" class="md-nav__link">
+    <span class="md-ellipsis">
+      What changed since ADR 0008
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-constraint-adr-0008-never-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      The constraint ADR 0008 never states
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-1-the-slog-is-earning-its-place" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 1: the SLOG is earning its place
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Finding 1: the SLOG is earning its place">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-there-is-sync-traffic-at-all-given-syncstandard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why there is sync traffic at all, given sync=standard
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-true-about-the-slog" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is true about the SLOG
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-2-the-nvme-is-89-gib-too-small-to-protect-mirror-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 2: the NVMe is 89 GiB too small to protect mirror-3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-3-capacity-on-fast-is-tighter-than-adr-0008-implies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 3: capacity on fast is tighter than ADR 0008 implies
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-4-tankk8s-cannot-ride-along-with-the-zvols" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 4: tank/k8s cannot ride along with the zvols
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#candidate-uses-evaluated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Candidate uses, evaluated
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Candidate uses, evaluated">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-on-the-rejections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes on the rejections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ordering-and-why" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ordering, and why
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-exposure-this-creates-stated-plainly" class="md-nav__link">
+    <span class="md-ellipsis">
+      The exposure this creates, stated plainly
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-slog-question-answered" class="md-nav__link">
+    <span class="md-ellipsis">
+      The SLOG question, answered
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-arc-question-answered" class="md-nav__link">
+    <span class="md-ellipsis">
+      The ARC question, answered
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-in-adr-0008-is-now-stale-or-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      What in ADR 0008 is now stale or wrong
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#confidence-and-what-could-not-be-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      Confidence, and what could not be verified
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cheatsheet/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Cheatsheet
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Cheatsheet
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/kubectl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    kubectl
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/helm-argocd/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Helm and ArgoCD
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/bash-and-linux/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bash and Linux
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Postgres
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/prometheus-amtool/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus and amtool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/onepassword-eso/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    1Password and ExternalSecrets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/ansible/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cheatsheet/terraform/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Terraform
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      The question
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-changed-since-adr-0008" class="md-nav__link">
+    <span class="md-ellipsis">
+      What changed since ADR 0008
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-constraint-adr-0008-never-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      The constraint ADR 0008 never states
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-1-the-slog-is-earning-its-place" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 1: the SLOG is earning its place
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Finding 1: the SLOG is earning its place">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-there-is-sync-traffic-at-all-given-syncstandard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why there is sync traffic at all, given sync=standard
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-true-about-the-slog" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is true about the SLOG
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-2-the-nvme-is-89-gib-too-small-to-protect-mirror-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 2: the NVMe is 89 GiB too small to protect mirror-3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-3-capacity-on-fast-is-tighter-than-adr-0008-implies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 3: capacity on fast is tighter than ADR 0008 implies
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-4-tankk8s-cannot-ride-along-with-the-zvols" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding 4: tank/k8s cannot ride along with the zvols
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#candidate-uses-evaluated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Candidate uses, evaluated
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Candidate uses, evaluated">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-on-the-rejections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes on the rejections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      Decision
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ordering-and-why" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ordering, and why
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-exposure-this-creates-stated-plainly" class="md-nav__link">
+    <span class="md-ellipsis">
+      The exposure this creates, stated plainly
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-slog-question-answered" class="md-nav__link">
+    <span class="md-ellipsis">
+      The SLOG question, answered
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-arc-question-answered" class="md-nav__link">
+    <span class="md-ellipsis">
+      The ARC question, answered
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-in-adr-0008-is-now-stale-or-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      What in ADR 0008 is now stale or wrong
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consequences
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#confidence-and-what-could-not-be-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      Confidence, and what could not be verified
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/mithr4ndir/quasarlab-docs/edit/main/docs/decisions/0009-nvme-repurposing.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="adr-0009-what-the-two-sn850x-should-actually-do">ADR 0009: What the two SN850X should actually do<a class="headerlink" href="#adr-0009-what-the-two-sn850x-should-actually-do" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Proposed. Supersedes <a href="../0008-storage-tiering/">ADR 0008</a> steps 3
+and 4, and amends step 2.
+<strong>Date:</strong> 2026-10-07
+<strong>Measurements taken:</strong> 2026-10-07, read-only, against <code>192.168.1.15</code>,
+<code>192.168.1.10</code> and the Kubernetes API.</p>
+<h2 id="the-question">The question<a class="headerlink" href="#the-question" title="Permanent link">&para;</a></h2>
+<p>The NAS holds two 4 TB WD_BLACK SN850X. One is <code>tank</code>'s SLOG, one is idle
+since the L2ARC was removed on 2026-09-20. The question put to this ADR was
+open: "maybe a new datastore for something else". <a href="../0008-storage-tiering/">ADR 0008</a>
+already proposed an answer, but it was written on 2026-09-20, several of its
+load-bearing facts have changed, and exactly one of its four steps has been
+executed.</p>
+<p>This ADR re-derives the answer from measurements taken today. The short
+version: <strong>ADR 0008's end state is still right, its reasoning for two of the
+four steps is wrong, and it omits the one constraint that determines the
+whole ordering.</strong></p>
+<h2 id="what-changed-since-adr-0008">What changed since ADR 0008<a class="headerlink" href="#what-changed-since-adr-0008" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>2026-09-20 (ADR 0008)</th>
+<th>2026-10-07 (today)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L2ARC</td>
+<td>3.4 TB, <code>l2_hdr_size</code> 20.6 GiB, 43% of ARC</td>
+<td><strong>Gone.</strong> <code>l2_size</code>, <code>l2_asize</code>, <code>l2_hdr_size</code>, <code>l2_hits</code> all <code>0</code></td>
+</tr>
+<tr>
+<td>VM disk backups</td>
+<td><code>tank/backups</code>, 158 G of vzdump, on the pool it protects</td>
+<td><strong>PBS 3.4.9 on <code>pbs1</code></strong>, hourly, all VMs, <code>--verify-new</code>, 24/7/4/3, restore drill passed. <code>tank/backups</code> destroyed (terraform-quasarlab#26)</td>
+</tr>
+<tr>
+<td>SLOG assessment</td>
+<td>"11.5 MiB used of 3.64 TB", "not earning it"</td>
+<td><strong>Earning it.</strong> 49 write IOPS and 3.70 MiB/s sustained at 92us. See <a href="#finding-1-the-slog-is-earning-its-place">Finding 1</a></td>
+</tr>
+<tr>
+<td>ARC hit rate</td>
+<td>99.27%</td>
+<td>99.08% lifetime, metadata <strong>99.99%</strong></td>
+</tr>
+<tr>
+<td><code>tank</code> health</td>
+<td>3 drives had dropped off the bus</td>
+<td>ONLINE, 0 errors, <strong>0 <code>ata</code> resets in 16 days</strong></td>
+</tr>
+<tr>
+<td>PVE</td>
+<td>8.4.21, EOL 2026-08-31</td>
+<td>Unchanged, still EOL, plugin still held at 2.4.0-1</td>
+</tr>
+</tbody>
+</table>
+<p>Two of those changes matter enough to move the decision. PBS existing changes
+the cost of every destructive step below. The SLOG measurement reverses ADR
+0008 step 3.</p>
+<h2 id="the-constraint-adr-0008-never-states">The constraint ADR 0008 never states<a class="headerlink" href="#the-constraint-adr-0008-never-states" title="Permanent link">&para;</a></h2>
+<p><code>nvme0n1p1</code> <strong>is</strong> <code>tank</code>'s log vdev right now (<code>blkid</code> reports
+<code>LABEL="tank" TYPE="zfs_member"</code>, and its <code>PARTUUID</code>
+<code>a1bfbe13-bfc0-4e7c-92e4-c28c963225e6</code> is the device under <code>logs</code> in
+<code>zpool status</code>). <code>nvme1n1p1</code> is a member of nothing: <code>zdb -l</code> still finds a
+stale <strong>L2ARC device header</strong> on it carrying <code>pool_guid</code>
+<code>7043569411961946042</code> (which is <code>tank</code>) and <code>state: 4</code>, but <code>blkid</code> reports no
+pool label.</p>
+<p>So <strong>the two drives cannot both join a new mirror until the SLOG is retired.</strong>
+ADR 0008 lists "create <code>fast</code>" as step 2 and "retire the SLOG" as step 3, in
+that order, which is not executable. The steps are coupled and the dependency
+runs the other way. Everything in the <a href="../../runbooks/nvme-tiering-migration/">runbook</a>
+follows from this.</p>
+<h2 id="finding-1-the-slog-is-earning-its-place">Finding 1: the SLOG is earning its place<a class="headerlink" href="#finding-1-the-slog-is-earning-its-place" title="Permanent link">&para;</a></h2>
+<p>ADR 0008 retired the SLOG on the grounds that it held 11.5 MiB of a 3.64 TB
+device. That is a measurement of <strong>allocation</strong>, and it says nothing about
+utility. ZIL blocks are freed on every txg commit, so near-zero allocation is
+the correct and expected steady state for a healthy SLOG. A SLOG that had
+filled up would be the pathology.</p>
+<p>The metrics that do measure utility are IOPS, bandwidth and latency. All three
+say it is working.</p>
+<table>
+<thead>
+<tr>
+<th>Measurement</th>
+<th>Log vdev</th>
+<th><code>tank</code> data vdevs</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Write IOPS, since boot (16d)</td>
+<td><strong>49/s</strong></td>
+<td>211/s across 4 mirrors</td>
+<td><code>zpool iostat -v tank</code></td>
+</tr>
+<tr>
+<td>Write bandwidth, since boot</td>
+<td><strong>3.70 MiB/s</strong></td>
+<td>8.78 MiB/s</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Write IOPS, live 60s sample</td>
+<td><strong>95/s</strong></td>
+<td>151/s</td>
+<td><code>zpool iostat -v -l tank 60 2</code></td>
+</tr>
+<tr>
+<td>Write <code>disk_wait</code></td>
+<td><strong>88us</strong></td>
+<td>346us to 593us</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Write <code>total_wait</code></td>
+<td><strong>92us</strong></td>
+<td>1ms to 2ms</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Lifetime written</td>
+<td><strong>76.0 TB</strong></td>
+<td>n/a</td>
+<td><code>smartctl -a /dev/nvme0</code></td>
+</tr>
+<tr>
+<td>Lifetime read</td>
+<td><strong>4.16 GB</strong></td>
+<td>n/a</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Percentage Used</td>
+<td>2%</td>
+<td>n/a</td>
+<td>same</td>
+</tr>
+</tbody>
+</table>
+<p>Read the first two rows together: <strong>42% of the bytes written to <code>tank</code>'s data
+vdevs pass through the ZIL first.</strong> That is not an async-dominated workload.</p>
+<p>The 76.0 TB written against 4.16 GB read is the signature of a correctly
+functioning SLOG. It is write-only in normal operation and is read back only
+during an unclean import, so 4.16 GB over 14,654 power-on hours means the pool
+has essentially never needed it for recovery. That is the SLOG working, not
+the SLOG idle.</p>
+<h3 id="why-there-is-sync-traffic-at-all-given-syncstandard">Why there is sync traffic at all, given <code>sync=standard</code><a class="headerlink" href="#why-there-is-sync-traffic-at-all-given-syncstandard" title="Permanent link">&para;</a></h3>
+<p><code>sync=standard</code> is set everywhere (<code>local</code> on <code>tank/proxmox_zfs_vms</code>, default
+elsewhere) and <code>logbias=latency</code> everywhere. Under <code>sync=standard</code> the ZIL
+only sees writes the client explicitly asks to be durable. Two things are
+asking, constantly:</p>
+<ol>
+<li><strong>SCST advertises a volatile cache.</strong> All 68 exported devices report
+   <code>nv_cache = 0</code> under <code>/sys/kernel/scst_tgt/devices/*/nv_cache</code>, so the
+   target honours <code>SYNCHRONIZE_CACHE</code> and FUA. Every guest <code>fsync</code> (etcd WAL,
+   ext4 journal commits, the *arr SQLite databases) becomes a real ZFS sync
+   write.</li>
+<li><strong>Every NFS export is <code>sync</code>.</strong> <code>exportfs -v</code> shows <code>sync</code> on
+   <code>/mnt/tank/media</code>, <code>/mnt/tank/isos</code>, <code>/mnt/tank/k8s</code>, <code>/mnt/tank/terraform</code>
+   and <code>/mnt/tank/files</code>.</li>
+</ol>
+<p>So ADR 0008 step 3's premise, that <code>tank</code>'s workload is "async-dominated", is
+measurably false <strong>while VM disks are still on <code>tank</code></strong>. It becomes true only
+after they leave, which is why step 3 cannot be justified on its own terms and
+has to be justified as a consequence of step 2.</p>
+<h3 id="what-is-true-about-the-slog">What <em>is</em> true about the SLOG<a class="headerlink" href="#what-is-true-about-the-slog" title="Permanent link">&para;</a></h3>
+<p>It is absurdly oversized. Peak allocation observed across three samples was
+77.5 MiB. At the current 3.70 MiB/s and a 5-second txg window, even a hundred
+times the observed working set fits in well under 32 GiB. And wear is a
+non-issue: 76.0 TB is about 3% of the SN850X 4 TB endurance rating, SMART
+agrees at 2% used, and at the current burn rate (roughly 312 GiB/day) the
+remaining endurance is on the order of 19 years. <strong>The role is worth keeping.
+Dedicating 3.64 TB to it is not.</strong></p>
+<h2 id="finding-2-the-nvme-is-89-gib-too-small-to-protect-mirror-3">Finding 2: the NVMe is 89 GiB too small to protect <code>mirror-3</code><a class="headerlink" href="#finding-2-the-nvme-is-89-gib-too-small-to-protect-mirror-3" title="Permanent link">&para;</a></h2>
+<p>The obvious cheap mitigation for the <code>mirror-3</code> problem (both remaining
+bad-batch drives in one vdev, so one vdev failing loses the pool) is to attach
+the idle NVMe as a third mirror leg. One command, one resilver, reversible by
+<code>zpool detach</code>, and <code>mirror-3</code> would then survive losing both bad drives.</p>
+<p><strong>It is physically impossible.</strong> <code>zpool attach</code> and <code>zpool replace</code> both
+require the incoming device to be at least as large as the vdev's <code>asize</code>.</p>
+<table>
+<thead>
+<tr>
+<th>vdev</th>
+<th><code>asize</code> (bytes)</th>
+<th>Members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mirror-0</td>
+<td>4,000,780,386,304</td>
+<td>WD Blue <code>24230KD00111</code>, WD Blue <code>24230KD00129</code></td>
+</tr>
+<tr>
+<td>mirror-1</td>
+<td>4,000,780,386,304</td>
+<td>WD Blue <code>24230KD00005</code>, Inland <code>IB24AK0004S00013</code></td>
+</tr>
+<tr>
+<td>mirror-2</td>
+<td><strong>4,096,799,539,200</strong></td>
+<td>Inland <code>IB24AJ0004S00183</code>, Inland <code>IB24AJ0004S00059</code></td>
+</tr>
+<tr>
+<td>mirror-3</td>
+<td><strong>4,096,799,539,200</strong></td>
+<td>Inland <code>IB24AK0004S00064</code>, Inland <code>IB24AK0004S00004</code></td>
+</tr>
+<tr>
+<td>SN850X partition</td>
+<td>4,000,780,386,304</td>
+<td><code>nvme0n1p1</code> / <code>nvme1n1p1</code></td>
+</tr>
+</tbody>
+</table>
+<p>The SN850X is <strong>96,019,152,896 bytes (89.4 GiB) smaller</strong> than <code>mirror-3</code>'s
+<code>asize</code>. The Inland drives are physically larger than both the WD Blues and
+the NVMe, and <code>mirror-0</code>/<code>mirror-1</code> are capped at the WD Blue size.</p>
+<p>So the NVMe fits <code>mirror-0</code> and <code>mirror-1</code> exactly, and cannot go into
+<code>mirror-2</code> or <code>mirror-3</code> at all. <strong>The one vdev where a third leg would
+prevent pool loss is the one vdev the drive cannot join.</strong> Attaching it to
+<code>mirror-1</code> instead would protect the third bad drive
+(<code>IB24AK0004S00013</code>), which is real but not the pool-losing case, at the cost
+of consuming the drive permanently.</p>
+<div class="admonition note">
+<p class="admonition-title">A useful side result: the bad batch is identifiable by serial prefix</p>
+<p><code>smartctl -i</code> reports only <code>Inland SATA SSD</code> as the model for all five.
+The discriminator is the serial prefix: <strong><code>IB24AK</code> is the bad batch</strong>
+(three drives: <code>S00013</code> in <code>mirror-1</code>, <code>S00064</code> and <code>S00004</code> in
+<code>mirror-3</code>) and <strong><code>IB24AJ</code> is the good batch</strong> (<code>S00183</code> and <code>S00059</code>,
+both in <code>mirror-2</code>). This confirms ADR 0008's claim about <code>mirror-3</code>
+independently, by serial.</p>
+</div>
+<h2 id="finding-3-capacity-on-fast-is-tighter-than-adr-0008-implies">Finding 3: capacity on <code>fast</code> is tighter than ADR 0008 implies<a class="headerlink" href="#finding-3-capacity-on-fast-is-tighter-than-adr-0008-implies" title="Permanent link">&para;</a></h2>
+<p>ADR 0008 says the hot data is "about 700 GB on 3.6 TB usable, <strong>19% full</strong>,
+with room to grow several times over". That is true of <em>consumption</em> and
+misleading about <em>commitment</em>.</p>
+<table>
+<thead>
+<tr>
+<th>Measurement</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>zvols under <code>tank/proxmox_zfs_vms</code></td>
+<td>61</td>
+</tr>
+<tr>
+<td><strong>Provisioned (sum of <code>volsize</code>)</strong></td>
+<td><strong>2785.1 GiB</strong></td>
+</tr>
+<tr>
+<td>Used (sum of <code>used</code>)</td>
+<td>663.8 GiB</td>
+</tr>
+<tr>
+<td>Referenced (sum of <code>referenced</code>)</td>
+<td>506.0 GiB</td>
+</tr>
+<tr>
+<td>In snapshots</td>
+<td>157.8 GiB across <strong>2233 snapshots</strong></td>
+</tr>
+<tr>
+<td>Thin ratio</td>
+<td>4.2x</td>
+</tr>
+</tbody>
+</table>
+<p>2785.1 GiB provisioned against a 3.64 TiB mirror is <strong>75% committed before a
+single snapshot</strong>, and ZFS write performance degrades past roughly 80%. On
+<code>tank</code> this overcommit is harmless because 9.66 T is free. On <code>fast</code> it is
+not.</p>
+<p><code>refquota=4T</code> is set on <code>tank/proxmox_zfs_vms</code> and <strong>does not bound the
+zvols</strong>. Verified directly: every child zvol reports <code>AVAIL 9.53T</code>, the whole
+pool's free space, not the 4.00 T the parent reports. <code>quota</code> is unset.
+<code>zvol_enforce_quotas</code> is <code>1</code>, so a real <code>quota</code> <em>will</em> be honoured.</p>
+<p><strong><code>fast</code> must get a <code>quota</code>, not a <code>refquota</code>.</strong> ADR 0008 does not mention
+capacity bounding at all.</p>
+<h2 id="finding-4-tankk8s-cannot-ride-along-with-the-zvols">Finding 4: <code>tank/k8s</code> cannot ride along with the zvols<a class="headerlink" href="#finding-4-tankk8s-cannot-ride-along-with-the-zvols" title="Permanent link">&para;</a></h2>
+<p>ADR 0008 step 2 moves <code>proxmox_zfs_vms</code> (664 G) <strong>and</strong> <code>k8s</code> (45.9 G) to
+<code>fast</code> in one step. The second half is a different and much harder change.</p>
+<p>The Kubernetes PVCs are provisioned by <code>nfs-subdir-external-provisioner</code>
+behind StorageClass <code>k8s-nfs</code>, and the dataset path is baked into every
+PersistentVolume. Verified on <code>pvc-c1e41304-2466-49fa-a8d4-64fdbe5af80d</code>
+(Loki's 50 Gi volume):</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">nfs</span><span class="p">:</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/mnt/tank/k8s/monitoring/storage-loki-0</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">server</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.1.15</span>
+</span></code></pre></div>
+<p><code>spec.nfs.path</code> is immutable on a PV. Moving the dataset to <code>/mnt/fast/k8s</code>
+invalidates roughly twenty bound PVs, each of which would have to be deleted
+and recreated with the new path and re-bound by <code>volumeName</code>, plus a Helm
+values change for the provisioner's <code>NFS_PATH</code>. The failure mode is pods stuck
+mounting, which is a different blast radius from a zvol move.</p>
+<p>Two further points argue for leaving it alone: those PVs target
+<strong><code>192.168.1.15</code>, the 1 G LAN interface</strong>, not <code>10.10.12.2</code> on the 10 G
+storage network, so NVMe backing is partly wasted behind the transport. And
+<code>tank/k8s</code> is 45.9 G, so the capacity argument is negligible.</p>
+<p><strong><code>tank/k8s</code> stays on <code>tank</code>.</strong> It is a separate decision for a separate ADR.</p>
+<h2 id="candidate-uses-evaluated">Candidate uses, evaluated<a class="headerlink" href="#candidate-uses-evaluated" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Problem it solves</th>
+<th>Cost</th>
+<th>Blast radius</th>
+<th>Survives one device loss</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A.</strong> <code>fast</code> mirror of both, VM zvols only</td>
+<td>Takes 61 VM disks off a pool whose <code>mirror-3</code> pairs both bad drives</td>
+<td>SLOG must be retired first; new PVE storage def; 2233 snapshots lost; needs a <code>quota</code></td>
+<td>All VMs in one 2-way mirror, same appliance</td>
+<td>Yes</td>
+<td><strong>Recommended, amended as G</strong></td>
+</tr>
+<tr>
+<td><strong>B.</strong> PBS datastore on the NAS</td>
+<td>A bigger PBS datastore than 600 G</td>
+<td>Re-creates a decision already made</td>
+<td>NAS dies, VM disks <em>and</em> their backups die together</td>
+<td>Yes (pool), no (appliance)</td>
+<td><strong>Rejected</strong></td>
+</tr>
+<tr>
+<td><strong>C.</strong> Mirrored <code>special</code> vdev on <code>tank</code></td>
+<td>Accelerates the whole pool without splitting it</td>
+<td>Adds a third failure domain to a pool that already has a bad vdev; not evacuable</td>
+<td>Whole pool, and now one more way to lose it</td>
+<td>Yes (if mirrored)</td>
+<td><strong>Rejected, better reasons than ADR 0008 gave</strong></td>
+</tr>
+<tr>
+<td><strong>D.</strong> Keep <code>nvme0</code> as SLOG, repurpose <code>nvme1</code> alone</td>
+<td>Preserves the measured 92us sync path</td>
+<td>Leaves all 61 VM disks on the bad SATA pool</td>
+<td>Unchanged, which is the problem</td>
+<td>n/a</td>
+<td><strong>Rejected as an end state</strong></td>
+</tr>
+<tr>
+<td><strong>E.</strong> Single-drive <code>fast</code>, no mirror</td>
+<td>Can start today without touching the SLOG</td>
+<td>Every VM disk on one non-redundant device</td>
+<td>Total lab loss on one NVMe failure</td>
+<td><strong>No</strong></td>
+<td><strong>Rejected</strong></td>
+</tr>
+<tr>
+<td><strong>F.</strong> Do nothing</td>
+<td>Nothing. Costs nothing.</td>
+<td><code>mirror-3</code> stays a single-vdev pool-loss risk with no alerting (#175)</td>
+<td>Unchanged</td>
+<td>n/a</td>
+<td><strong>Rejected, on narrowed grounds</strong></td>
+</tr>
+<tr>
+<td><strong>G.</strong> Partition both: 32 GiB SLOG slice + <code>fast</code> mirror on the remainder</td>
+<td>A, plus keeps the SLOG option alive</td>
+<td>64 GiB of 7.3 TiB raw, unused until needed</td>
+<td>Same as A</td>
+<td>Yes</td>
+<td><strong>Recommended</strong></td>
+</tr>
+<tr>
+<td><strong>H.</strong> <code>nvme1</code> as a third leg of <code>mirror-3</code></td>
+<td>Would remove the pool-loss risk in one reversible command</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>n/a</td>
+<td><strong>Impossible.</strong> 89.4 GiB too small, <a href="#finding-2-the-nvme-is-89-gib-too-small-to-protect-mirror-3">Finding 2</a></td>
+</tr>
+<tr>
+<td><strong>I.</strong> Re-add a right-sized L2ARC</td>
+<td>Would serve reads that miss ARC</td>
+<td>ARC misses are 98.6% satisfied already and metadata misses are 0.008% of metadata reads</td>
+<td>Low</td>
+<td>Yes</td>
+<td><strong>Rejected, settled by ADR 0008 and still true</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="notes-on-the-rejections">Notes on the rejections<a class="headerlink" href="#notes-on-the-rejections" title="Permanent link">&para;</a></h3>
+<p><strong>B, PBS on the NAS.</strong> <code>tank/backups</code> (261 GiB of vzdump archives) was
+deliberately destroyed in terraform-quasarlab#26 because backups must not live
+on the pool they protect. Putting a PBS datastore on NVMe in a <em>different
+pool</em> on the <em>same appliance</em> does not change the failure domain that
+motivated that decision: the NAS is a single appliance and a SPOF, and it also
+hosts the cluster QDevice and command-center1's cloud-init drive (#199). If
+the appliance dies, the VM disks and their backups die in the same event. The
+correct second copy is <code>pbs2</code>, which is already staged as vm120 on <strong>pve2</strong>
+with a 600 G disk on <code>ssd_2</code> (verified in <code>qm config 120</code>), on different
+hardware. This is the one option that actively re-litigates a settled
+decision, and it should not be reopened on capacity grounds.</p>
+<p><strong>C, <code>special</code> vdev.</strong> ADR 0008 gave two reasons and one of them is wrong. It
+said a <code>special</code> vdev "is not optional once written: losing it loses the pool,
+so it inherits the blast radius". A <em>mirrored</em> <code>special</code> survives one device
+loss exactly as the proposed <code>fast</code> mirror does, so that argument proves too
+much. It also said 3.6 TB of <code>special</code> for a 5 TB pool is "the same mistake as
+the current L2ARC in a new hat". <strong>That analogy is wrong.</strong> The L2ARC's harm
+was <code>l2_hdr_size</code>, RAM overhead that scales with device size, which is why
+3.4 TB of L2ARC ate 20.6 GiB of a 62 GiB ARC. A <code>special</code> vdev has no RAM tax
+at all. Oversized <code>special</code> is merely wasteful, not harmful.</p>
+<p>Reject it anyway, for two reasons ADR 0008 did not have:</p>
+<ul>
+<li><strong>The read benefit is near zero.</strong> <code>demand_metadata_hits</code> is 1,281,629,175
+  against <code>demand_metadata_misses</code> of 96,646: metadata is served from ARC
+  <strong>99.99%</strong> of the time. Misses are overwhelmingly demand <em>data</em>
+  (6,154,391). A metadata <code>special</code> vdev accelerates reads that are already
+  free.</li>
+<li><strong>To get a real benefit you would need <code>special_small_blocks=16K</code></strong>, which,
+  given <code>volblocksize</code>/<code>recordsize</code> of 16 K on <code>proxmox_zfs_vms</code>, would route
+  essentially all VM data to the <code>special</code> vdev. At that point you have built
+  <code>fast</code> inside <code>tank</code>, keeping the single-pool blast radius and gaining no
+  ability to survive losing <code>tank</code>. That is the opposite of the goal.</li>
+</ul>
+<p><strong>D, keep the SLOG and repurpose one drive.</strong> This is the option that respects
+Finding 1, and it is the cheapest. It is still wrong, because the two risks
+are not comparable. The SLOG is worth roughly 1 ms per sync write. The
+bad-batch pairing in <code>mirror-3</code> is worth the entire pool. Option G gets both.</p>
+<p><strong>E, single-drive <code>fast</code>.</strong> Tempting because <code>nvme1</code> is free today, so no SLOG
+retirement is needed and the migration can start immediately. Rejected: it
+puts every VM disk in the lab on one device with no redundancy for the
+duration of the migration <em>and</em> the subsequent resilver. PBS with a passed
+restore drill makes that survivable rather than reckless, but it trades a
+bounded performance cost for an unbounded data-loss cost. Never trade
+redundancy for latency.</p>
+<p><strong>F, do nothing.</strong> More defensible today than on 2026-09-20, and that should
+be said plainly. <code>tank</code> is ONLINE with zero read, write and checksum errors,
+"No known data errors", 34% full, 25% fragmented, zero <code>ata</code> link resets in 16
+days of uptime, a 99.08% ARC hit rate and a SLOG absorbing sync writes at
+92us. <strong>There is no performance problem to fix.</strong> PBS landing on 2026-10-06
+also lowered the cost of the risk materialising. Rejected anyway, but note the
+narrowed justification: the reason to act is <code>mirror-3</code>, not speed. Any
+argument for this work that leans on latency is dishonest.</p>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p><strong>Adopt option G.</strong> The end state is ADR 0008's: a mirror of the two SN850X
+holding the VM zvols, taking every VM disk off the SATA pool. Three
+amendments.</p>
+<ol>
+<li>
+<p><strong>Partition both drives up front:</strong> a 32 GiB <code>p1</code> and the remainder as
+   <code>p2</code>. Build <code>fast</code> as a mirror of <code>nvme0n1p2</code> + <code>nvme1n1p2</code>. Leave both
+   <code>p1</code> slices <strong>unused</strong> until measurement says <code>tank</code> needs a log again.</p>
+<p>The reason is mechanical: you cannot carve a partition off a drive that is
+already a whole-disk vdev member without destroying the pool. Finding 1
+proves the SLOG role is real, so the option has to be preserved at
+creation time or not at all. The cost is 64 GiB of 7.3 TiB raw. The cost
+of skipping it is redoing the entire migration. ZFS on partitions is
+already how this box works: <code>boot-pool</code> is <code>nvme2n1p3</code> and today's SLOG is
+itself <code>nvme0n1p1</code>, not a whole disk.</p>
+</li>
+<li>
+<p><strong>Set <code>quota</code> on <code>fast/proxmox_zfs_vms</code></strong>, not <code>refquota</code>. See
+   <a href="#finding-3-capacity-on-fast-is-tighter-than-adr-0008-implies">Finding 3</a>.
+   Suggested value 2.5 T, which bounds the 2785 GiB of thin commitment below
+   the 80% line and still leaves room.</p>
+</li>
+<li>
+<p><strong>Leave <code>tank/k8s</code> where it is.</strong> See
+   <a href="#finding-4-tankk8s-cannot-ride-along-with-the-zvols">Finding 4</a>.</p>
+</li>
+</ol>
+<p><strong>And drop ADR 0008 step 4, the <code>tank</code> rebalance.</strong> Do not execute it. The
+rebalance exists only to stop <code>mirror-3</code> pairing two bad drives, but the RMA
+(#193) <em>replaces</em> those drives. Rebalancing now means three resilvers on bad
+drives, then three more when the replacements land: six instead of three, on
+drives whose failure trigger is still not established. Worse, a rebalance by
+detach-and-attach runs a resilver on a vdev that is deliberately degraded,
+which is precisely the scenario ADR 0008's own consequences section names as
+"how a pool is lost". A straight <code>zpool replace</code> after the RMA keeps the old
+drive in the vdev until the resilver completes, and never degrades anything.</p>
+<p><strong>Step 4 was the right diagnosis with the wrong remedy. The remedy is the
+RMA.</strong></p>
+<h3 id="ordering-and-why">Ordering, and why<a class="headerlink" href="#ordering-and-why" title="Permanent link">&para;</a></h3>
+<p>Full detail in the <a href="../../runbooks/nvme-tiering-migration/">runbook</a>. The
+constraints:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Must happen</th>
+<th>Before</th>
+<th>Because</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>ZFS pool health alerting (#175)</td>
+<td><strong>everything</strong></td>
+<td>Three drives failed and Prometheus stayed silent. Resilvers and topology changes on an appliance with no alerting is how a recoverable event became the 4.5 hour wedge on 2026-09-20</td>
+</tr>
+<tr>
+<td>1</td>
+<td><code>pbs1</code> to <code>pbs2</code> sync job</td>
+<td>any topology change</td>
+<td>Cheapest risk reduction available, pure addition, no lab risk. Roles are already open in ansible-quasarlab#215</td>
+</tr>
+<tr>
+<td>2</td>
+<td>RMA #193 and <code>zpool replace</code></td>
+<td>the rebalance (which is now cancelled)</td>
+<td>Replacing the bad drives dissolves the <code>mirror-3</code> problem without a rebalance</td>
+</tr>
+<tr>
+<td>3</td>
+<td>PVE 9 upgrade and <code>freenas-proxmox</code> 3.0.0</td>
+<td>creating the <code>fast</code> storage definition</td>
+<td><code>fast</code> needs a new ZFS-over-iSCSI storage definition interpreted by a plugin that is apt-held at 2.4.0-1 (confirmed <code>hi</code> in <code>apt-mark showhold</code>) and known to fail the 8 to 9 dist-upgrade through its dpkg trigger. Defining <code>fast</code> against 2.4.0 means validating the migration twice. Do the plugin work once, then define <code>fast</code> once</td>
+</tr>
+<tr>
+<td>4</td>
+<td>SLOG removal from <code>tank</code></td>
+<td>creating <code>fast</code></td>
+<td>The coupling. Both drives are needed for the mirror</td>
+</tr>
+</tbody>
+</table>
+<p>Note that steps 2 and 3 have <strong>unknown timing</strong> and the <code>mirror-3</code> risk is
+live in the meantime. There is no clean interim mitigation available:
+<a href="#finding-2-the-nvme-is-89-gib-too-small-to-protect-mirror-3">Finding 2</a> rules
+out the obvious one on physics. What is available is steps 0 and 1, which
+convert "the pool might die silently" into "the pool dies loudly and we
+restore from two independent copies". Do those now, this week, and treat them
+as the mitigation.</p>
+<h3 id="the-exposure-this-creates-stated-plainly">The exposure this creates, stated plainly<a class="headerlink" href="#the-exposure-this-creates-stated-plainly" title="Permanent link">&para;</a></h3>
+<p>Between <code>zpool remove tank &lt;log&gt;</code> and the last VM leaving <code>tank</code>, every guest
+<code>fsync</code> on <code>tank</code> lands on the SATA mirrors at 346us to 593us <code>disk_wait</code>
+instead of 88us, and the ZIL stops being a separate device so sync writes
+contend with data writes. Roughly <strong>4x to 6x worse per sync write</strong>. The thing
+that cares is etcd WAL fsync, whose baseline was already about 74 ms, and 2 of
+3 etcd members are on pve2.</p>
+<p>The alternative ordering (option E, migrate to a single-device <code>fast</code> first so
+the SLOG keeps working throughout) removes that regression by removing
+redundancy instead. <strong>Take the latency hit.</strong> Mitigate it by migrating the
+sync-sensitive VMs first: etcd members, then anything with a database. The
+regression is bounded, measurable, and undone at any moment by
+<code>zpool add tank log</code>.</p>
+<div class="admonition danger">
+<p class="admonition-title"><code>zpool remove</code> of a log vdev is not the operation that wedged the lab</p>
+<p>On 2026-09-20 a <code>zpool remove</code> of the <strong>cache</strong> vdev, pitched as "instant
+and reversible", aggravated an overloaded NAS into a 4.5 hour wedge and a
+cold power cycle. That removal had 20.6 GiB of <code>l2_hdr_size</code> to tear out
+of ARC. Removing a <strong>log</strong> vdev has no ARC work to do at all: it quiesces
+the ZIL, flushes outstanding sync writes to the data vdevs, and detaches.
+Mechanically it is a much smaller operation.</p>
+<p>That is not permission to run it casually. It is still a pool topology
+change on an appliance with a demonstrated capacity to wedge under load.
+<strong>"Reversible" and "safe to run right now" are different claims</strong>, and
+ADR 0008 collapsed them. Run it in a window, with alerting live
+(step 0) and PBS verified (step 1), and with <code>zpool iostat</code> open.</p>
+</div>
+<h2 id="the-slog-question-answered">The SLOG question, answered<a class="headerlink" href="#the-slog-question-answered" title="Permanent link">&para;</a></h2>
+<p><strong>Yes, the SLOG is earning something today, and it is quantifiable.</strong> 49 write
+IOPS and 3.70 MiB/s sustained over 16 days of uptime, 95 IOPS in a live
+sample, acknowledged at 92us against 1 ms to 2 ms <code>total_wait</code> on the SATA
+mirrors. 42% of the bytes reaching <code>tank</code>'s data vdevs pass through the ZIL
+first. Full detail in <a href="#finding-1-the-slog-is-earning-its-place">Finding 1</a>.</p>
+<p>What <strong>cannot</strong> be quantified read-only is the end-to-end user-visible benefit:
+how much of that 1 ms to 2 ms difference a guest actually observes, after SCST
+queueing, the 10 G network and QEMU's libiscsi path. Measuring that needs an
+A/B with the SLOG removed, which is a mutating change and is not done here.
+<strong>Marked unverified.</strong> The device-level latency gap is real and measured; the
+guest-level consequence is inferred.</p>
+<p>The honest summary: the role is worth keeping, a 3.64 TB device for it is not,
+and after the VM disks leave <code>tank</code> the sync load drops to NFS-<code>sync</code> traffic
+on <code>media</code>, <code>isos</code> and <code>k8s</code> only, at which point a log device may genuinely
+stop earning its place. That is why recommendation G <strong>keeps the option and
+defers the judgement</strong> rather than retiring the role on today's evidence or
+ADR 0008's.</p>
+<h2 id="the-arc-question-answered">The ARC question, answered<a class="headerlink" href="#the-arc-question-answered" title="Permanent link">&para;</a></h2>
+<p><strong>Yes, cap it. <code>zfs_arc_max = 51539607552</code> (48 GiB).</strong> But this is a guardrail,
+not a fix, and the case is weaker than it looks.</p>
+<p>Measured today:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>zfs_arc_max</code></td>
+<td><code>0</code></td>
+<td>TrueNAS default, not tuned</td>
+</tr>
+<tr>
+<td><code>c_max</code></td>
+<td>66,086,522,880</td>
+<td><strong>61.55 GiB of 62 GiB host RAM</strong></td>
+</tr>
+<tr>
+<td><code>c</code> (target)</td>
+<td>51,840,468,464</td>
+<td>48.28 GiB</td>
+</tr>
+<tr>
+<td><code>size</code> (actual)</td>
+<td>50,307,580,376</td>
+<td>46.86 GiB</td>
+</tr>
+<tr>
+<td><code>c_min</code></td>
+<td>2,098,758,272</td>
+<td>1.95 GiB</td>
+</tr>
+<tr>
+<td><code>memory_available_bytes</code></td>
+<td>6,345,863,552</td>
+<td>5.91 GiB</td>
+</tr>
+<tr>
+<td><code>arc_no_grow</code></td>
+<td><code>0</code></td>
+<td>not currently under pressure</td>
+</tr>
+<tr>
+<td><code>evict_skip</code></td>
+<td>8,161</td>
+<td>negligible</td>
+</tr>
+<tr>
+<td>Lifetime hit rate</td>
+<td>1,718,164,113 / 15,882,958</td>
+<td><strong>99.08%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The argument for capping: <code>c_max</code> permits ARC to take 61.55 of 62 GiB,
+leaving under half a gigabyte for the OS, SCST with its 68 exported devices,
+<code>nfsd</code>, <code>middlewared</code>, the <code>ix-apps</code> Docker stack and the cluster QDevice VM
+that runs on this appliance. That only works because ARC shrinks under
+pressure, and ARC shrinking is reactive and lags the pressure that triggers
+it.</p>
+<p><strong>48 GiB costs nothing measured.</strong> ARC has self-tuned to a 48.28 GiB target
+and a 46.86 GiB actual size, so the cap pins it where it already sits and
+removes only the headroom to balloon under some future workload. The 99.08%
+hit rate is the hit rate <em>at this size</em>.</p>
+<p>The argument against, which should be recorded rather than buried: <strong>the
+specific RAM pressure that contributed to 2026-09-20 was <code>l2_hdr_size</code> at
+20.6 GiB, and it is already gone.</strong> <code>l2_hdr_size</code> reads <code>0</code> today. So this
+recommendation does not fix an observed problem. It is a cheap ceiling against
+a repeat by some other route.</p>
+<p><strong>Confidence: high that 48 GiB is harmless, medium that it is necessary.</strong> Set
+it, in Ansible rather than by hand, and do not credit it with anything.</p>
+<h2 id="what-in-adr-0008-is-now-stale-or-wrong">What in ADR 0008 is now stale or wrong<a class="headerlink" href="#what-in-adr-0008-is-now-stale-or-wrong" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>ADR 0008</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Step 1, destroy the L2ARC</td>
+<td><strong>Executed 2026-09-20.</strong> Correct call, correct reasoning. <code>l2_hdr_size</code> is now 0</td>
+</tr>
+<tr>
+<td>Step 1's "<strong>Instant, reversible, no migration</strong>"</td>
+<td><strong>Wrong, and it cost 4.5 hours.</strong> The removal wedged an already-loaded NAS and forced a cold power cycle. The claim was true of the command's semantics and false of its behaviour under load. ADR 0008 also calls it "the highest value per unit of risk of anything here", which was right about the value and wrong about the risk</td>
+</tr>
+<tr>
+<td>Step 1's predicted "returns 20.6 GiB to ARC"</td>
+<td><strong>Not delivered as predicted.</strong> ARC <code>size</code> is 46.86 GiB today against the 48.2 GiB recorded on 2026-09-20, so it did not grow by 20 GiB. ARC's target had already absorbed the headroom. The hit rate also moved from 99.27% to 99.08%, so the predicted improvement did not appear either. Neither is a problem; both are predictions recorded as outcomes-in-waiting that did not come true</td>
+</tr>
+<tr>
+<td>Step 2, create <code>fast</code> and move hot data</td>
+<td><strong>Right end state, three amendments.</strong> Capacity bounding missing (Finding 3), <code>tank/k8s</code> cannot ride along (Finding 4), and the SLOG coupling is unstated</td>
+</tr>
+<tr>
+<td>Step 2's "about 700 GB on 3.6 TB usable, 19% full"</td>
+<td><strong>Misleading.</strong> True of consumption, but 2785.1 GiB is provisioned across 61 thin zvols, which is 75% of the mirror before snapshots</td>
+</tr>
+<tr>
+<td>Step 3, retire the SLOG</td>
+<td><strong>Premise refuted.</strong> "Async-dominated" is false while VM disks are on <code>tank</code>. See Finding 1</td>
+</tr>
+<tr>
+<td>Step 3's "11.5 MiB used of 3.64 TB" as evidence of no utility</td>
+<td><strong>Category error.</strong> Measures allocation, not utility. Near-zero allocation is correct SLOG behaviour</td>
+</tr>
+<tr>
+<td>Step 4, rebalance <code>tank</code> mirrors</td>
+<td><strong>Should be cancelled, not executed.</strong> The RMA supersedes it. See <a href="#decision">Decision</a></td>
+</tr>
+<tr>
+<td><code>special</code> vdev rejection, reason 1 ("losing it loses the pool")</td>
+<td><strong>Weak.</strong> A mirrored <code>special</code> survives one device loss, same as the proposed <code>fast</code></td>
+</tr>
+<tr>
+<td><code>special</code> vdev rejection, reason 2 ("the L2ARC mistake in a new hat")</td>
+<td><strong>Wrong analogy.</strong> The L2ARC's harm was RAM headers scaling with device size. A <code>special</code> vdev has no RAM tax</td>
+</tr>
+<tr>
+<td>Dataset table: <code>backups</code> 158 G</td>
+<td><strong>Gone.</strong> <code>tank/backups</code> destroyed in terraform-quasarlab#26</td>
+</tr>
+<tr>
+<td>Dataset table: <code>media</code> 4.21 T, <code>proxmox_zfs_vms</code> 656 G, <code>k8s</code> 44 G</td>
+<td>Now 4.27 T, 664 G, 45.9 G. Drift only</td>
+</tr>
+<tr>
+<td>"three Inland SSDs pending RMA, two of them paired in the same mirror"</td>
+<td><strong>Confirmed independently by serial.</strong> <code>IB24AK</code> prefix, <code>S00064</code> and <code>S00004</code> both in <code>mirror-3</code></td>
+</tr>
+</tbody>
+</table>
+<p>One meta-point. ADR 0008's own Validation section says "Record the results
+here rather than assuming them" and warns about "a plan recorded as though it
+were an outcome". Step 1 was then executed and its three predicted outcomes
+(20.6 GiB returned to ARC, hit rate rises, done in seconds with no disruption)
+were none of them recorded, and none of them happened as written. <strong>The
+warning was correct and was not followed.</strong> That is the strongest argument for
+keeping the validation table in this ADR short, specific and actually filled
+in.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>fast</code> becomes a single failure domain for every VM disk.</strong> Two-way
+  mirror, survives one device. Not a regression: <code>tank</code> is that failure domain
+  today and contains three drives that drop off the SATA bus. But it is also
+  not an improvement in cardinality, only in component quality (2% worn
+  SN850X, 100% spare, zero media errors).</li>
+<li><strong>The NAS remains a SPOF and this ADR does not touch that.</strong> Same appliance,
+  same QDevice-on-the-NAS problem, same command-center1 cloud-init dependency
+  (#199). Splitting one pool into two reduces the <em>pool</em> blast radius, not the
+  <em>appliance</em> blast radius. Anyone reading this as "the lab now survives the
+  NAS" has misread it.</li>
+<li><strong>2233 snapshots holding 157.8 GiB are lost</strong> in a PVE <code>Move Disk</code>, which
+  copies current state only. This is acceptable <strong>now</strong> in a way it was not
+  when ADR 0008 was written: before 2026-10-06 those hourly snapshots were the
+  only recovery mechanism for VM disks, and now PBS is, hourly, with 24/7/4/3
+  retention and a restore verified against <code>nginx2</code> (hostname, kernel, root
+  filesystem, package count and <code>/etc</code> md5 all identical). <strong>PBS landing is
+  what makes this step affordable.</strong></li>
+<li><strong><code>zfs send -R</code> is not an alternative for preserving them.</strong> The
+  <code>freenas-proxmox</code> plugin creates the SCST extents through the TrueNAS API, so
+  hand-replicated zvols would arrive with no iSCSI target mapping. Use
+  <code>Move Disk</code> and accept the snapshot loss.</li>
+<li><strong>A degraded sync-write path on <code>tank</code> for the duration of the migration.</strong>
+  Bounded, measurable, reversible. See
+  <a href="#the-exposure-this-creates-stated-plainly">the exposure</a>.</li>
+<li><strong>Two pools, two capacity numbers, a second ZFS-over-iSCSI storage
+  definition</strong> against a third-party plugin on a distribution that is already
+  EOL. Accepted, and the reason the PVE 9 upgrade is sequenced first.</li>
+<li><strong><code>media</code> stays on SSD</strong> and <code>tank/k8s</code> stays on SATA. Both unchanged from
+  ADR 0008's position on <code>media</code>, and a deliberate reversal on <code>k8s</code>.</li>
+<li><strong>No live migration anywhere in this.</strong> pve is Intel and pve2 is AMD, so
+  every VM move is shutdown-and-start. <code>Move Disk</code> itself is online, but any
+  step that needs a VM on the other node is not.</li>
+</ul>
+<h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
+<p>Nothing here is validated. These are measurements and a plan. Record results
+in this section as they land, and leave the unfilled rows visibly unfilled.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Claim to test</th>
+<th>How</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ZFS pool health alerting actually fires</td>
+<td>Offline a drive in a scratch pool, or <code>zinject</code>, and confirm Discord</td>
+<td><em>not done</em></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>pbs2</code> holds a complete independent copy</td>
+<td>Restore one VM from <code>pbs2</code>, not <code>pbs1</code>, to a scratch VMID and diff as the <code>nginx2</code> drill did</td>
+<td><em>not done</em></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Removing the SLOG degrades sync writes by the predicted 4x to 6x</td>
+<td><code>zpool iostat -v -l tank 60</code> before and after; record etcd WAL fsync p99 from Prometheus</td>
+<td><em>not done</em></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>fast</code> outperforms <code>tank</code> for VM workloads</td>
+<td>etcd WAL fsync p99 and Uptime Kuma NFS probe latency, against today's baseline</td>
+<td><em>not done</em></td>
+</tr>
+<tr>
+<td>5</td>
+<td>The <code>quota</code> on <code>fast/proxmox_zfs_vms</code> is <strong>not</strong> vacuous</td>
+<td>Read <code>AVAIL</code> on a <strong>child zvol</strong>, not the parent. It must report the quota, not the pool free space</td>
+<td><em>not done</em></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Capping ARC at 48 GiB does not move the hit rate</td>
+<td><code>arcstats</code> hits/misses over a week either side</td>
+<td><em>not done</em></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>tank</code> no longer needs a log device</td>
+<td>After the VMs leave, <code>zpool iostat -v tank</code> log-vdev IOPS should collapse toward NFS-<code>sync</code> traffic only</td>
+<td><em>not done</em></td>
+</tr>
+</tbody>
+</table>
+<p>Row 5 is the one most likely to be skipped and is the one that has already
+caught this lab out once: <code>refquota</code> on the parent reads as a ceiling in the
+Proxmox UI and bounds nothing.</p>
+<h2 id="confidence-and-what-could-not-be-verified">Confidence, and what could not be verified<a class="headerlink" href="#confidence-and-what-could-not-be-verified" title="Permanent link">&para;</a></h2>
+<p><strong>High confidence</strong>, measured directly and cited above: the SLOG's IOPS,
+bandwidth, latency and lifetime figures; the 89.4 GiB size shortfall against
+<code>mirror-3</code>; the drive serial to vdev mapping and the <code>IB24AK</code>/<code>IB24AJ</code> batch
+split; <code>refquota</code> being vacuous for child zvols; the 2785.1 GiB thin
+commitment; SCST <code>nv_cache=0</code>; every NFS export being <code>sync</code>; the ARC figures;
+<code>nvme1n1p1</code> being a member of no pool; the PV path immutability problem.</p>
+<p><strong>Inferred, not measured:</strong></p>
+<ul>
+<li><strong>The guest-visible benefit of the SLOG.</strong> Device-level latency is measured.
+  How much of it a VM sees through SCST, 10 GbE and libiscsi is not. Requires
+  a mutating A/B.</li>
+<li><strong>Resilver duration for the RMA replacements.</strong> The only data point is
+  "13.8 G in 11:05 on 2026-09-16", which is too small to extrapolate from.</li>
+<li><strong>That PVE 9 plus plugin 3.0.0 will accept a second ZFS-over-iSCSI storage
+  definition cleanly.</strong> Taken from upstream ADR-009 and not tested here.</li>
+<li><strong>Whether <code>tank</code> still wants a log device after the VMs leave.</strong> That is
+  validation row 7 and the reason the 32 GiB slices exist.</li>
+</ul>
+<p><strong>One premise in the brief that needs a footnote:</strong> the uptime was given as "2
+weeks 2 days (since 2026-09-20 15:37:46)". <code>uptime</code> on the NAS at 17:39 on
+2026-10-07 reports <code>16 days, 2:01</code>, which puts the boot at roughly
+<strong>2026-09-21 15:38</strong>, one day later than stated. The 16-day figure is right
+and nothing in this ADR depends on the date, but the 2026-09-20 incident and
+the NAS boot are not the same moment.</p>
+<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../0008-storage-tiering/">ADR 0008</a>, the prior this ADR amends.</li>
+<li><a href="../../runbooks/nvme-tiering-migration/">Runbook: NVMe tiering migration</a>, the sequenced plan.</li>
+<li><a href="../../runbooks/nas-storage-tiering-migration/">Runbook: tiered NAS storage migration</a>, ADR 0008's runbook. Stages 3 and 4 there are superseded by this ADR.</li>
+<li><a href="../../runbooks/nas-reboot-evacuate-vm-disks/">Runbook: NAS reboot with zero VM downtime</a>, the same live <code>Move Disk</code> technique.</li>
+<li><a href="../../incidents/2026-09-20-ugreen-it8613-watchdog/">2026-09-20 UGREEN IT8613 watchdog</a>.</li>
+<li><a href="../../incidents/2026-09-19-nfsv4-callback-deadlock/">2026-09-19 NFSv4 callback deadlock</a>, which made the single-pool coupling visible.</li>
+<li>ansible-quasarlab#193 (RMA), #174 (<code>mirror-3</code> pairing), #175 (no ZFS health alerting), #199 (NAS SPOF), #215 (PBS roles).</li>
+<li>terraform-quasarlab#26, which destroyed <code>tank/backups</code>.</li>
+<li><a href="../../architecture/overview/#storage">Storage architecture</a>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/mithr4ndir" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
