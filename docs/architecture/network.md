@@ -75,6 +75,22 @@ for p in $(kubectl -n metallb-system get pod -l component=speaker -o name); do
 done
 ```
 
+## Firewall logs in Loki
+
+pfSense is the one host that is not under Ansible, so its logging setup is recorded here rather than in a role.
+
+- The firewall sends syslog to the Vector aggregator at `192.168.1.232:5514` over **UDP**. The built-in syslogd has no TCP mode, so the aggregator exposes the port twice: the original TCP Service and a second LoadBalancer Service for UDP sharing the same address through `metallb.io/allow-shared-ip` (k8s-argocd#249).
+- Format is **RFC 5424**, not the RFC 3164 default. RFC 3164 stamps carry no timezone, and the firewall keeps local time, so its entries would land in Loki hours off. With RFC 5424 the offset travels with each line and the Loki timestamp matches wall clock.
+- All categories are forwarded (`logall`). Volume is roughly 40 lines a minute, almost all `filterlog` blocks on the WAN.
+- Loki label is `host="core.home.arpa"`: RFC 5424 carries the FQDN, where every Ansible-managed host appears by short name.
+- Set on 2026-10-20 through the REST API (`PATCH /api/v2/status/logs/settings`), which also restarted syslogd. The firewall's own log entries and the Vector listener line in the aggregator pod are the evidence trail.
+
+```logql
+{host="core.home.arpa"} | json | appname != "filterlog"
+```
+
+is the useful starting query: gateway alarms, DHCP, VPN and sshguard without the packet-filter noise.
+
 ## Egress to the Postgres VM
 
 This is the failure mode that bit me on 2026-05-03. The flow:
